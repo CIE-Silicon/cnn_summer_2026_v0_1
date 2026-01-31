@@ -39,9 +39,9 @@ proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
 
- "[file normalize "$origin_dir/../SoC_PJT/sim/s25fl128s.v"]"\
- "[file normalize "$origin_dir/../SoC_PJT/sim/uart_receiver.v"]"\
- "[file normalize "$origin_dir/../SoC_PJT/sim/TB.v"]"\
+ "[file normalize "$origin_dir/SoC_PJT/sim/s25fl128s.v"]"\
+ "[file normalize "$origin_dir/SoC_PJT/sim/uart_receiver.v"]"\
+ "[file normalize "$origin_dir/SoC_PJT/sim/TB.v"]"\
   ]
   foreach ifile $files {
     if { ![file isfile $ifile] } {
@@ -72,7 +72,7 @@ if { [info exists ::origin_dir_loc] } {
 }
 
 # Set the project name
-set _xil_proj_name_ "project_1(2)"
+set _xil_proj_name_ "project_1"
 
 # Use project name variable, if specified in the tcl shell
 if { [info exists ::user_project_name] } {
@@ -223,9 +223,9 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 set obj [get_filesets sim_1]
 # Import local files from the original project
 set files [list \
- [file normalize "${origin_dir}/../SoC_PJT/sim/s25fl128s.v"]\
- [file normalize "${origin_dir}/../SoC_PJT/sim/uart_receiver.v"]\
- [file normalize "${origin_dir}/../SoC_PJT/sim/TB.v"]\
+ [file normalize "${origin_dir}/SoC_PJT/sim/s25fl128s.v"]\
+ [file normalize "${origin_dir}/SoC_PJT/sim/uart_receiver.v"]\
+ [file normalize "${origin_dir}/SoC_PJT/sim/TB.v"]\
 ]
 set imported_files ""
 foreach f $files {
@@ -269,8 +269,8 @@ set obj [get_filesets utils_1]
 set obj [get_filesets utils_1]
 
 
-# Adding sources referenced in BDs, if not already added
-
+add_files -fileset sim_1 -norecurse [file normalize "${origin_dir}/SoC_PJT/flashmodelfiles/MFWH.mem"] 
+add_files -fileset sim_1 -norecurse [file normalize "${origin_dir}/SoC_PJT/flashmodelfiles/s25fl128sOTP.mem"] 
 
 # Proc to create BD design_1
 proc cr_bd_design_1 { parentCell } {

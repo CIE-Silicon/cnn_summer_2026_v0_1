@@ -251,8 +251,8 @@ module s25fl128s
     assign SO_z = SOut_z;
 
     parameter UserPreload       = 1;
-    parameter mem_file_name     = "../flashmodelfiles/MFWH.mem";//"s25fl128s.mem";/home/simics/s25fl128s.mem /home/simics/CIE_SILICON/VIVADO_PROJECTS/flashmodelfiles
-    parameter otp_file_name     = "../flashmodelfiles/s25fl128sOTP.mem";//"none";
+    parameter mem_file_name     = "MFWH.mem";//"s25fl128s.mem";/home/simics/s25fl128s.mem /home/simics/CIE_SILICON/VIVADO_PROJECTS/flashmodelfiles
+    parameter otp_file_name     = "s25fl128sOTP.mem";//"none";
 
     parameter TimingModel       = "DefaultTimingModel";
 
