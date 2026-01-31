@@ -1,0 +1,36 @@
+# --- Vivado Project/Run Files ---
+# Ignore the entire work directory where the project is built
+work/
+
+# Ignore auto-generated log and journal files
+*.log
+*.jou
+*.str
+*.pb
+
+# --- IP Generation Artifacts ---
+# We keep the IP_REPO, but ignore the output products Vivado generates during synthesis
+IP_REPO/**/*.gen/
+IP_REPO/**/*.runs/
+IP_REPO/**/*.cache/
+IP_REPO/**/*.hw/
+IP_REPO/**/*.ip_user_files/
+
+# --- Simulation Artifacts ---
+# Ignore Xsim simulation snapshots and databases
+xsim.dir/
+*.wdb
+*.vcd
+*.sh
+*.bat
+.Xil/
+
+# --- Hardware Export ---
+# Ignore bitstreams and hardware handoff files if they appear in root
+*.bit
+*.bin
+*.xsa
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
