@@ -12,11 +12,7 @@ puts " SOC PROJECT ROOT DETECTED AT:"
 puts " $origin_dir"
 puts "********************************************************"
 
-# Define the relative path to your IP repository
-set_property  ip_repo_paths  [file normalize "$origin_dir/IP_REPO"] [current_project]
 
-# Refresh the catalog so Vivado "sees" the IPs inside
-update_ip_catalog
 
 # 2. Rebuild the Project Structure
 # This runs the script you exported from Vivado
