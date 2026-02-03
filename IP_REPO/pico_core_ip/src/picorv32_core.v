@@ -307,7 +307,7 @@ assign temp_mem_addr=(mem_addr==32'd100)?mem_addr:temp_mem_addr;
 assign temp_mem_wdata=(mem_addr==32'd100)?mem_wdata:temp_mem_wdata ;
 assign temp_mem_wstrb=(mem_addr==32'd100)?mem_wstrb:temp_mem_wstrb;*/
 
-assign temp_mem_valid=((mem_addr>=32'h1000 ))&&mem_valid; //4096 words
+assign temp_mem_valid=(((mem_addr>>2)>=32'h1000 ))&&mem_valid; //4096 words
 assign temp_mem_instr=mem_instr;
 assign temp_mem_addr=mem_addr;
 assign temp_mem_wdata=mem_wdata  ;
