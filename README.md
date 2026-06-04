@@ -25,11 +25,11 @@ A portable RISC-V SoC integration project based on the **PicoRV32** processor, d
 ### 1. Clone the Repository
 
 ### 2. Launch and Build
-Navigate into the parent folder (VIVADO_BLOCK_DESIGN_V01) and launch Vivado using the master script:
+Navigate into the parent folder (where you cloned this repo) and launch Vivado using the master script:
 
 
 ```
-cd VIVADO_BLOCK_DESIGN_V01
+cd <repo name>
 
 vivado -mode gui -source master_tcl.tcl
 ```
