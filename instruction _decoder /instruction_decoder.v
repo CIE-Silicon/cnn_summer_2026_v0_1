@@ -22,228 +22,128 @@
 // Additional Comments:
 // Supports CNN_LD_WT, CNN_LD_IMG and CNN_EXE instructions.
 //////////////////////////////////////////////////////////////////////////////////
-`timescale 1ns / 1ps
-
-module instruction_decoder(
-
+  
+endmodule
+`timescale 1ns/1ps
+module pcpi (
     input clk,
-    input rst,
+    input resetn,
+    input pcpi_valid,
+    input [31:0] pcpi_insn,
+    input [31:0] pcpi_rs1,
+    input [31:0] pcpi_rs2,          // NEW: rs2 carries destination base addr
 
-    input start_decode,
-
-    input [31:0] instruction,
-
-    //-----------------------------------
-    // Weight Loader Interface
-    //-----------------------------------
-
-    output reg start_weight_load,
+    // Weight load outputs
+    output reg        start_weight_load,
     output reg [11:0] weight_base_addr,
-    output reg [11:0] weight_size,
+    output reg [16:0] num_featuremaps,
 
-    //-----------------------------------
-    // Image Loader Interface
-    //-----------------------------------
-
-    output reg start_image_load,
+    // Image load / execute outputs
+    output reg        start_image_load,
     output reg [11:0] image_base_addr,
-    output reg [11:0] image_size,
+    output reg [11:0] dest_base_addr,   // CHANGED: was [4:0], now [11:0] from rs2
+    output reg [11:0] num_channels,
 
-    //-----------------------------------
-    // Execute Interface
-    //-----------------------------------
-
-    output reg start_execute,
-    output reg [11:0] output_base_addr,
-
-    //-----------------------------------
-    // Status
-    //-----------------------------------
-
-    output reg decode_done
-
+    // PCPI handshake
+    output reg        pcpi_wr,
+    output reg [31:0] pcpi_rd,
+    output reg        pcpi_wait,
+    output reg        pcpi_ready
 );
 
+    // ----------------------------------------------------------------
+    // Instruction field decode
+    //
+    //  [31:25]  opcode    (7 bits) - custom-0 = 7'b0001011
+    //  [24:22]  funct3    (3 bits) - CNN opcode
+    //  [21:17]  rs1       (5 bits) - source register index
+    //
+    //  CNN_LD_WT  (funct3=000):
+    //    [16:0]  num_featuremaps (17 bits)
+    //
+    //  CNN_LD_IMG_EXE (funct3=001):
+    //    [21:17] rs1 → image_base_addr  (from pcpi_rs1)
+    //    [16:12] rs2 → dest_base_addr   (from pcpi_rs2)  ← NEW
+    //    [11:0]  num_channels (12 bits)
+    // ----------------------------------------------------------------
 
-//====================================================
-// CNN Instructions
-//====================================================
+    wire instr_custom;
+    assign instr_custom = pcpi_valid &&
+                          (pcpi_insn[31:25] == 7'b0001011);
 
-localparam CNN_LD_WT  = 3'b000;
-localparam CNN_LD_IMG = 3'b001;
-localparam CNN_EXE    = 3'b010;
+    wire CNN_LD_WT;
+    wire CNN_LD_IMG_EXE;
+    assign CNN_LD_WT      = instr_custom && (pcpi_insn[24:22] == 3'b000);
+    assign CNN_LD_IMG_EXE = instr_custom && (pcpi_insn[24:22] == 3'b001);
 
+    // Field extraction
+    wire [4:0]  rs1_field       = pcpi_insn[21:17];
+    wire [4:0]  rs2_field       = pcpi_insn[16:12];   // rs2 index in instruction
+    wire [16:0] featuremaps_field = pcpi_insn[16:0];  // CNN_LD_WT
+    wire [11:0] channels_field    = pcpi_insn[11:0];  // CNN_LD_IMG_EXE
 
-//====================================================
-// Internal Register File
-//====================================================
+    reg seen;
 
-reg [31:0] regfile [0:31];
-
-
-//====================================================
-// Instruction Fields
-//====================================================
-
-wire [11:0] imm;
-wire [4:0]  rs1;
-wire [2:0]  funct3;
-
-assign imm    = instruction[31:20];
-assign rs1    = instruction[19:15];
-assign funct3 = instruction[14:12];
-
-
-//====================================================
-// Main FSM
-//====================================================
-
-always @(posedge clk)
-begin
-
-    if(rst)
-    begin
-
-        //---------------------------------
-        // Example Register Contents
-        //---------------------------------
-
-        regfile[0] <= 32'd0;
-
-        regfile[1] <= 32'd256;    // weights start
-        regfile[2] <= 32'd0;      // image start
-        regfile[3] <= 32'd1024;   // output start
-
-        //---------------------------------
-
-        start_weight_load <= 0;
-        start_image_load  <= 0;
-        start_execute     <= 0;
-
-        weight_base_addr <= 0;
-        image_base_addr  <= 0;
-        output_base_addr <= 0;
-
-        weight_size <= 0;
-        image_size  <= 0;
-
-        decode_done <= 0;
-
-    end
-
-    else
-    begin
-
-        //---------------------------------
-        // defaults
-        //---------------------------------
-
-        start_weight_load <= 0;
-        start_image_load  <= 0;
-        start_execute     <= 0;
-
-        decode_done <= 0;
-
-        //---------------------------------
-        // Decode
-        //---------------------------------
-
-        if(start_decode)
-        begin
-
-            case(funct3)
-
-            //---------------------------------
-            // CNN_LD_WT
-            //---------------------------------
-
-            CNN_LD_WT:
-            begin
-
-                weight_base_addr <= regfile[rs1][11:0];
-                weight_size      <= imm;
-
-                start_weight_load <= 1;
-
-                $display("");
-                $display("=================================");
-                $display("CNN_LD_WT");
-                $display("=================================");
-                $display("RS1            = x%0d", rs1);
-                $display("BASE_ADDR      = %0d", regfile[rs1]);
-                $display("WEIGHT_COUNT   = %0d", imm);
-                $display("=================================");
-                $display("");
-
-            end
-
-            //---------------------------------
-            // CNN_LD_IMG
-            //---------------------------------
-
-            CNN_LD_IMG:
-            begin
-
-                image_base_addr <= regfile[rs1][11:0];
-                image_size      <= imm;
-
-                start_image_load <= 1;
-
-                $display("");
-                $display("=================================");
-                $display("CNN_LD_IMG");
-                $display("=================================");
-                $display("RS1          = x%0d", rs1);
-                $display("BASE_ADDR    = %0d", regfile[rs1]);
-                $display("IMAGE_SIZE   = %0d", imm);
-                $display("=================================");
-                $display("");
-
-            end
-
-            //---------------------------------
-            // CNN_EXE
-            //---------------------------------
-
-            CNN_EXE:
-            begin
-
-                output_base_addr <= regfile[rs1][11:0];
-
-                start_execute <= 1;
-
-                $display("");
-                $display("=================================");
-                $display("CNN_EXE");
-                $display("=================================");
-                $display("RS1          = x%0d", rs1);
-                $display("OUTPUT_ADDR  = %0d", regfile[rs1]);
-                $display("=================================");
-                $display("");
-
-            end
-
-            //---------------------------------
-            // Invalid
-            //---------------------------------
-
-            default:
-            begin
-
-                $display("");
-                $display("INVALID CNN INSTRUCTION");
-                $display("");
-
-            end
-
-            endcase
-
-            decode_done <= 1;
-
+    always @(posedge clk) begin
+        if (!resetn) begin
+            start_weight_load <= 0;
+            weight_base_addr  <= 0;
+            num_featuremaps   <= 0;
+            start_image_load  <= 0;
+            image_base_addr   <= 0;
+            dest_base_addr    <= 0;
+            num_channels      <= 0;
+            pcpi_wr           <= 0;
+            pcpi_rd           <= 0;
+            pcpi_wait         <= 0;
+            pcpi_ready        <= 0;
+            seen              <= 0;
         end
+        else begin
+            start_weight_load <= 0;
+            start_image_load  <= 0;
+            pcpi_wr           <= 0;
+            pcpi_ready        <= 0;
+            pcpi_wait         <= 0;
 
+            if (pcpi_valid && !seen) begin
+
+                // ---- CNN_LD_WT ----
+                if (CNN_LD_WT) begin
+                    weight_base_addr  <= pcpi_rs1[11:0];
+                    num_featuremaps   <= featuremaps_field;
+                    start_weight_load <= 1;
+
+                    pcpi_rd    <= {15'd0, featuremaps_field};
+                    pcpi_wr    <= 1;
+                    pcpi_ready <= 1;
+                    seen       <= 1;
+
+                    $display("[PCPI] CNN_LD_WT  | rs1=x%0d base_addr=%0d featuremaps=%0d",
+                             rs1_field, pcpi_rs1[11:0], featuremaps_field);
+                end
+
+                // ---- CNN_LD_IMG_EXE ----
+                else if (CNN_LD_IMG_EXE) begin
+                    image_base_addr  <= pcpi_rs1[11:0];  // rs1 → image base
+                    dest_base_addr   <= pcpi_rs2[11:0];  // rs2 → destination base
+                    num_channels     <= channels_field;
+                    start_image_load <= 1;
+
+                    pcpi_rd    <= {20'd0, channels_field};
+                    pcpi_wr    <= 1;
+                    pcpi_ready <= 1;
+                    seen       <= 1;
+
+                    $display("[PCPI] CNN_LD_IMG | rs1=x%0d img_base=%0d rs2=x%0d dst_base=%0d channels=%0d",
+                             rs1_field, pcpi_rs1[11:0], rs2_field, pcpi_rs2[11:0], channels_field);
+                end
+
+            end
+
+            if (!pcpi_valid)
+                seen <= 0;
+        end
     end
-
-end
 
 endmodule
