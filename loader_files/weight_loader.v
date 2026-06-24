@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company: CIE Silicon
-// Engineer: Anagha Saraswathy
+// Engineer: Anagha Saraswathy,Pranav Lokesh
 //
 // Create Date:
 // Design Name: CNN SoC Accelerator
