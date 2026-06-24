@@ -141,7 +141,7 @@ endtask
             COPY_ROW: begin
                 case (row_number)
                     5'd0: begin
-                        line0      <= {8'b0001,temp_reg,8'b0010};
+                        line0      <= {8'b0000,temp_reg,8'b000};
                         $display("[LBL] ---- Loaded into line0 (row 0) ----");
                         display_row({8'h01,temp_reg,8'h02},0);
                         row_number <= 5'd1;
@@ -149,7 +149,7 @@ endtask
                         state      <= ISSUE_ADDR;
                     end
                     5'd1: begin
-                        line1      <= {8'b0001,temp_reg,8'b0010};
+                        line1      <= {8'b0000,temp_reg,8'b000};
                         $display("[LBL] ---- Loaded into line1 (row 1) ----");
                         display_row({8'h01,temp_reg,8'h02}, 1);
                         row_number <= 5'd2;
@@ -157,7 +157,7 @@ endtask
                         state      <= ISSUE_ADDR;
                     end
                     5'd2: begin
-                        line2        <= {8'b0001,temp_reg,8'b0010};
+                        line2        <= {8'b0000,temp_reg,8'b000};
                         $display("[LBL] ---- Loaded into line2 (row 2) ----");
                         display_row({8'h01,temp_reg,8'h02}, 2);
                         $display("[LBL] Initial 3 rows ready - asserting buffer_valid");
@@ -192,7 +192,7 @@ endtask
                 line2        <= temp_reg;
                 buffer_valid <= 1'b1;
                 $display("[LBL] ---- Shifting rows - inserting row %0d into line2 ----", row_number);
-                display_row({8'h01,temp_reg,8'h02}, row_number);
+                display_row({8'h00,temp_reg,8'h00}, row_number);
                 row_number <= row_number + 1'b1;
                 state      <= WAIT_FOR_CONV;
             end
