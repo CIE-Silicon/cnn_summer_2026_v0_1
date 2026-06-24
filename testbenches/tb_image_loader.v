@@ -1,4 +1,25 @@
-`timescale 1ns/1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: CIE Silicon
+// Engineer: Anagha Saraswathy
+//
+// Create Date:
+// Design Name: CNN SoC Accelerator
+// Module Name: tb_line_buffer_top
+// Project Name: CNN SoC
+// Target Devices: Artix-7 BASYS3
+//
+// Description:
+// Testbench for testing image loading and window generation 
+//
+// Dependencies:
+// line_buffer_loader
+//
+// Revision:
+// Revision 0.01 - File Created
+//
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////`timescale 1ns/1ps
 
 module tb_line_buffer_top;
 
