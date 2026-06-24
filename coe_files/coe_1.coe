@@ -1,0 +1,169 @@
+; ===========================================================================
+;  cnn_bram.coe
+;
+;  Vivado Block Memory Generator (blk_mem_gen) initialisation file.
+;
+;  Memory configuration assumed
+;  ----------------------------
+;  Width      : 32 bits
+;  Depth      : 4096 (12-bit address)
+;  Port type  : Single-port ROM/RAM
+;  Output reg : 1 pipeline stage (add one WAIT state in FSMs)
+;
+;  Address map
+;  -----------
+;  0x000 – 0x03F  Image pixel data  (8 rows × 8 words/row = 64 words)
+;                 Each 32-bit word packs 4 consecutive pixels (LSByte first).
+;                 Row k starts at address k*8.
+;
+;  0x100 – 0x111  Weight nibble data (16 filters × 9 nibbles = 144 nibbles
+;                 = 18 × 32-bit words packed 8 nibbles/word, LSNibble first).
+;
+;  0x112 – 0xFFF  Reserved (zeros)
+;
+;  How to use in Vivado
+;  --------------------
+;  1. Open Block Memory Generator IP ? "Other Options" tab.
+;  2. Tick "Load Init File" and browse to this .coe file.
+;  3. Set Memory Type to "Single Port RAM" (or ROM if read-only).
+;  4. Set Port A Width = 32, Depth = 4096.
+;  5. Enable Output Register (1 stage) ? match the WAIT states in the FSMs.
+;  6. Generate.
+;
+;  Regenerating this file
+;  ----------------------
+;  Row pixel pattern  : row k, pixel p = (k*32 + p) & 0xFF (wraps to 8-bit)
+;  Weight pattern     : filter f, weight w ? nibble = (f*9 + w) & 0xF
+;                       8 nibbles packed per 32-bit word, nibble 0 in bits[3:0]
+; ===========================================================================
+
+memory_initialization_radix  = 16;
+memory_initialization_vector  =
+
+; ---- Image row 0 : pixels 0x10..0x2F ----
+13121110,
+17161514,
+1B1A1918,
+1F1E1D1C,
+23222120,
+27262524,
+2B2A2928,
+2F2E2D2C,
+
+; ---- Image row 1 : pixels 0x30..0x4F ----
+33323130,
+37363534,
+3B3A3938,
+3F3E3D3C,
+43424140,
+47464544,
+4B4A4948,
+4F4E4D4C,
+
+; ---- Image row 2 : pixels 0x50..0x6F ----
+53525150,
+57565554,
+5B5A5958,
+5F5E5D5C,
+63626160,
+67666564,
+6B6A6968,
+6F6E6D6C,
+
+; ---- Image row 3 : pixels 0x70..0x8F ----
+73727170,
+77767574,
+7B7A7978,
+7F7E7D7C,
+83828180,
+87868584,
+8B8A8988,
+8F8E8D8C,
+
+; ---- Image row 4 : pixels 0x90..0xAF ----
+93929190,
+97969594,
+9B9A9998,
+9F9E9D9C,
+A3A2A1A0,
+A7A6A5A4,
+ABAAA9A8,
+AFAEADAC,
+
+; ---- Image row 5 : pixels 0xB0..0xCF ----
+B3B2B1B0,
+B7B6B5B4,
+BBBAB9B8,
+BFBEBDBC,
+C3C2C1C0,
+C7C6C5C4,
+CBCAC9C8,
+CFCECDCC,
+
+; ---- Image row 6 : pixels 0xD0..0xEF ----
+D3D2D1D0,
+D7D6D5D4,
+DBDAD9D8,
+DFDEDDDC,
+E3E2E1E0,
+E7E6E5E4,
+EBEAE9E8,
+EFEEEDED,
+
+; ---- Image row 7 : pixels 0xF0..0xFF then wrap 0x00..0x0F ----
+F3F2F1F0,
+F7F6F5F4,
+FBFAF9F8,
+FFFEFDFC,
+03020100,
+07060504,
+0B0A0908,
+0F0E0D0C,
+
+; ---- Reserved gap 0x040 – 0x0FF (192 words of zeros) ----
+; (Vivado fills unspecified entries with 0 automatically when
+;  "Fill Remaining" is enabled.  List them explicitly for clarity.)
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000, 00000000,
+
+
+76543210,   
+98765432,  
+BA987654,   
+DCBA9876,   
+FEDCBA98,  
+10FEDCBA,  
+3210FEDC,  
+543210FE,   
+76543210,   
+98765432,   
+BA987654,   
+DCBA9876,
+FEDCBA98,
+10FEDCBA,
+3210FEDC,
+543210FE,
+76543210,
+98765432;   
