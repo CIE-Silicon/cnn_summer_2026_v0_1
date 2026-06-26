@@ -23,7 +23,6 @@
 // Supports CNN_LD_WT, CNN_LD_IMG and CNN_EXE instructions.
 //////////////////////////////////////////////////////////////////////////////////
   
-endmodule
 `timescale 1ns/1ps
 module pcpi (
     input clk,
@@ -31,7 +30,10 @@ module pcpi (
     input pcpi_valid,
     input [31:0] pcpi_insn,
     input [31:0] pcpi_rs1,
-    input [31:0] pcpi_rs2,          // NEW: rs2 carries destination base addr
+    input [31:0] pcpi_rs2,
+
+    // NEW: weight FSM done signal - decoder stalls CPU until weights are loaded
+    input wire weight_load_ready,
 
     // Weight load outputs
     output reg        start_weight_load,
@@ -41,48 +43,66 @@ module pcpi (
     // Image load / execute outputs
     output reg        start_image_load,
     output reg [11:0] image_base_addr,
-    output reg [11:0] dest_base_addr,   // CHANGED: was [4:0], now [11:0] from rs2
+    output reg [11:0] dest_base_addr,
     output reg [11:0] num_channels,
 
     // PCPI handshake
     output reg        pcpi_wr,
     output reg [31:0] pcpi_rd,
-    output reg        pcpi_wait,
+    output wire       pcpi_wait,
     output reg        pcpi_ready
 );
 
     // ----------------------------------------------------------------
-    // Instruction field decode
+    // Instruction field layout  (standard RISC-V R-type)
     //
-    //  [31:25]  opcode    (7 bits) - custom-0 = 7'b0001011
-    //  [24:22]  funct3    (3 bits) - CNN opcode
-    //  [21:17]  rs1       (5 bits) - source register index
+    //  [6:0]   opcode  = 7'b0001011  (custom-0)
+    //  [11:7]  rd      - payload field (channels for CNN_LD_IMG)
+    //  [14:12] funct3  - CNN opcode selector
+    //  [19:15] rs1     - PicoRV32 puts regfile[rs1] on pcpi_rs1
+    //  [24:20] rs2     - PicoRV32 puts regfile[rs2] on pcpi_rs2
+    //  [31:25] funct7  - unused / zero
     //
     //  CNN_LD_WT  (funct3=000):
-    //    [16:0]  num_featuremaps (17 bits)
+    //    pcpi_rs1  → weight_base_addr   (register preloaded with base)
+    //    pcpi_rs2  → num_featuremaps    (register preloaded with count)
+    //    pcpi_ready is held LOW until weight_load_ready pulses from FSM
+    //    → CPU is stalled the entire time weights are loading
     //
-    //  CNN_LD_IMG_EXE (funct3=001):
-    //    [21:17] rs1 → image_base_addr  (from pcpi_rs1)
-    //    [16:12] rs2 → dest_base_addr   (from pcpi_rs2)  ← NEW
-    //    [11:0]  num_channels (12 bits)
+    //  CNN_LD_IMG (funct3=001):
+    //    pcpi_rs1      → image_base_addr
+    //    pcpi_rs2      → dest_base_addr
+    //    insn[11:7] rd → num_channels   (small constant, fits in 5-bit rd field)
+    //
+    //  Instruction words for tb_cnn.v ROM:
+    //    CNN_LD_WT  : 0x0040800B  (rs1=x1, rs2=x4  where x4=featuremaps)
+    //    CNN_LD_IMG : 0x0031140B  (rs1=x2, rs2=x3, rd=8=channels)
     // ----------------------------------------------------------------
 
     wire instr_custom;
     assign instr_custom = pcpi_valid &&
-                          (pcpi_insn[31:25] == 7'b0001011);
+                          (pcpi_insn[6:0] == 7'b0001011);
 
     wire CNN_LD_WT;
     wire CNN_LD_IMG_EXE;
-    assign CNN_LD_WT      = instr_custom && (pcpi_insn[24:22] == 3'b000);
-    assign CNN_LD_IMG_EXE = instr_custom && (pcpi_insn[24:22] == 3'b001);
+    assign CNN_LD_WT      = instr_custom && (pcpi_insn[14:12] == 3'b000);
+    assign CNN_LD_IMG_EXE = instr_custom && (pcpi_insn[14:12] == 3'b001);
 
-    // Field extraction
-    wire [4:0]  rs1_field       = pcpi_insn[21:17];
-    wire [4:0]  rs2_field       = pcpi_insn[16:12];   // rs2 index in instruction
-    wire [16:0] featuremaps_field = pcpi_insn[16:0];  // CNN_LD_WT
-    wire [11:0] channels_field    = pcpi_insn[11:0];  // CNN_LD_IMG_EXE
+    // Field extraction - standard RISC-V positions
+    wire [4:0] rs1_field      = pcpi_insn[19:15];
+    wire [4:0] rs2_field      = pcpi_insn[24:20];
+    wire [4:0] channels_field = pcpi_insn[11:7];
 
+    // waiting_wt: set when CNN_LD_WT is dispatched to FSM,
+    // cleared only when weight_load_ready pulses back.
+    // While HIGH, pcpi_wait stalls PicoRV32.
+    reg waiting_wt;
     reg seen;
+
+    // pcpi_wait: hold CPU whenever we have a valid custom instr that isn't done yet
+    // - for CNN_LD_WT: stall until weight_load_ready (waiting_wt goes LOW)
+    // - for CNN_LD_IMG: stall for one cycle (seen goes HIGH same cycle)
+    assign pcpi_wait = pcpi_valid && (!seen || waiting_wt);
 
     always @(posedge clk) begin
         if (!resetn) begin
@@ -95,45 +115,50 @@ module pcpi (
             num_channels      <= 0;
             pcpi_wr           <= 0;
             pcpi_rd           <= 0;
-            pcpi_wait         <= 0;
             pcpi_ready        <= 0;
             seen              <= 0;
+            waiting_wt        <= 0;
         end
         else begin
+            // Default pulses off every cycle
             start_weight_load <= 0;
             start_image_load  <= 0;
             pcpi_wr           <= 0;
             pcpi_ready        <= 0;
-            pcpi_wait         <= 0;
 
-            if (pcpi_valid && !seen) begin
+            // ---- CNN_LD_WT completion: FSM done, now release CPU ----
+            if (waiting_wt && weight_load_ready) begin
+                waiting_wt <= 0;
+                seen       <= 1;
+                pcpi_wr    <= 1;
+                pcpi_ready <= 1;   // CPU unblocked here, AFTER all weights loaded
+                pcpi_rd    <= {27'd0, num_featuremaps[4:0]};
+                $display("[PCPI] CNN_LD_WT  DONE - weights loaded, releasing CPU");
+            end
 
-                // ---- CNN_LD_WT ----
+            if (pcpi_valid && !seen && !waiting_wt) begin
+
+                // ---- CNN_LD_WT: dispatch to FSM, then stall ----
                 if (CNN_LD_WT) begin
                     weight_base_addr  <= pcpi_rs1[11:0];
-                    num_featuremaps   <= featuremaps_field;
+                    num_featuremaps   <= {12'd0, pcpi_rs2[4:0]};
                     start_weight_load <= 1;
+                    waiting_wt        <= 1;   // stall CPU until FSM done
+                    // pcpi_ready stays 0 here - CPU is held via pcpi_wait
 
-                    pcpi_rd    <= {15'd0, featuremaps_field};
-                    pcpi_wr    <= 1;
-                    pcpi_ready <= 1;
-                    seen       <= 1;
-
-                    $display("[PCPI] CNN_LD_WT  | rs1=x%0d base_addr=%0d featuremaps=%0d",
-                             rs1_field, pcpi_rs1[11:0], featuremaps_field);
+                    $display("[PCPI] CNN_LD_WT  | rs1=x%0d base_addr=%0d featuremaps=%0d - stalling CPU",
+                             rs1_field, pcpi_rs1[11:0], pcpi_rs2[4:0]);
                 end
 
-                // ---- CNN_LD_IMG_EXE ----
+                // ---- CNN_LD_IMG: one-cycle dispatch, no stall needed ----
                 else if (CNN_LD_IMG_EXE) begin
-                    image_base_addr  <= pcpi_rs1[11:0];  // rs1 → image base
-                    dest_base_addr   <= pcpi_rs2[11:0];  // rs2 → destination base
-                    num_channels     <= channels_field;
+                    image_base_addr  <= pcpi_rs1[11:0];
+                    dest_base_addr   <= pcpi_rs2[11:0];
+                    num_channels     <= {7'd0, channels_field};
                     start_image_load <= 1;
-
-                    pcpi_rd    <= {20'd0, channels_field};
-                    pcpi_wr    <= 1;
-                    pcpi_ready <= 1;
-                    seen       <= 1;
+                    pcpi_wr          <= 1;
+                    pcpi_ready       <= 1;
+                    seen             <= 1;
 
                     $display("[PCPI] CNN_LD_IMG | rs1=x%0d img_base=%0d rs2=x%0d dst_base=%0d channels=%0d",
                              rs1_field, pcpi_rs1[11:0], rs2_field, pcpi_rs2[11:0], channels_field);
@@ -141,9 +166,12 @@ module pcpi (
 
             end
 
-            if (!pcpi_valid)
-                seen <= 0;
+            if (!pcpi_valid) begin
+                seen       <= 0;
+                waiting_wt <= 0;
+            end
         end
     end
 
+endmodule
 endmodule
