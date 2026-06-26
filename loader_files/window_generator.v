@@ -23,12 +23,17 @@
 // Outputs a packed 72-bit convolution window.
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
-
+// ============================================================
+//  window_generator
+//  - col advances only when mac_done pulses (not every cycle)
+//  - conv_exe_done fires when col==30 AND mac_done
+// ============================================================
 module window_generator(
     input  wire        clk,
     input  wire        rst,
     input  wire        buffer_valid,
-    input  wire [255:0] line0, line1, line2,
+    input  wire [271:0] line0, line1, line2,
+    input  wire        mac_done,        // from mac_parallel
     output reg         window_valid,
     output reg  [7:0]  w00,w01,w02,
     output reg  [7:0]  w10,w11,w12,
@@ -36,8 +41,8 @@ module window_generator(
     output reg         row_done,
     output reg         conv_exe_done
 );
-    reg [4:0] col;          // which col to fetch NEXT rising edge
-    reg [4:0] display_col;  // col that matches current w00..w22 outputs
+    reg [4:0] col;
+    reg [4:0] display_col;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -46,57 +51,72 @@ module window_generator(
             window_valid  <= 1'b0;
             conv_exe_done <= 1'b0;
             row_done      <= 1'b0;
-            w00<=0;w01<=0;w02<=0;
-            w10<=0;w11<=0;w12<=0;
-            w20<=0;w21<=0;w22<=0;
+            w00<=0; w01<=0; w02<=0;
+            w10<=0; w11<=0; w12<=0;
+            w20<=0; w21<=0; w22<=0;
         end
         else begin
-            // Single-cycle pulse defaults
             conv_exe_done <= 1'b0;
             row_done      <= 1'b0;
 
-            if (buffer_valid) begin
-                // Latch pixels for col → they appear this cycle as outputs
-                display_col <= col;
-
-                w00 <= line0[(col+0)*8 +: 8];
-                w01 <= line0[(col+1)*8 +: 8];
-                w02 <= line0[(col+2)*8 +: 8];
-                w10 <= line1[(col+0)*8 +: 8];
-                w11 <= line1[(col+1)*8 +: 8];
-                w12 <= line1[(col+2)*8 +: 8];
-                w20 <= line2[(col+0)*8 +: 8];
-                w21 <= line2[(col+1)*8 +: 8];
-                w22 <= line2[(col+2)*8 +: 8];
-
+            if (buffer_valid && !window_valid) begin
+                // Present first window of the row
+                display_col  <= col;
+                w00 <= line0[(col+0)*8 +: 8];  w01 <= line0[(col+1)*8 +: 8];  w02 <= line0[(col+2)*8 +: 8];
+                w10 <= line1[(col+0)*8 +: 8];  w11 <= line1[(col+1)*8 +: 8];  w12 <= line1[(col+2)*8 +: 8];
+                w20 <= line2[(col+0)*8 +: 8];  w21 <= line2[(col+1)*8 +: 8];  w22 <= line2[(col+2)*8 +: 8];
                 window_valid <= 1'b1;
+            end
 
-                if (col == 5'd29) begin
+            // Advance only when MAC has finished this window
+            if (window_valid && mac_done) begin
+                if (col == 5'd31) begin
+                    // Full row done
+                    $display("[WG] col=%02d  |  %02X  %02X  %02X  |",
+                      31, w00, w01, w02);
+                    $display("[WG]        |  %02X  %02X  %02X  |",
+                      w10, w11, w12);
+                    $display("[WG]        |  %02X  %02X  %02X  |",
+                    w20, w21, w22);
+                       $display("[WG]        -------------------");
                     col           <= 5'd0;
+                    window_valid  <= 1'b0;
                     row_done      <= 1'b1;
                     conv_exe_done <= 1'b1;
+                    $display("[WG] ---- row_done - 32 windows generated ----");
                 end
                 else begin
-                    col <= col + 1'b1;
+                    // Move to next column, present next window immediately
+                    col         <= col + 1'b1;
+                    display_col <= col + 1'b1;
+                    w00 <= line0[(col+1)*8 +: 8];  w01 <= line0[(col+2)*8 +: 8];  w02 <= line0[(col+3)*8 +: 8];
+                    w10 <= line1[(col+1)*8 +: 8];  w11 <= line1[(col+2)*8 +: 8];  w12 <= line1[(col+3)*8 +: 8];
+                    w20 <= line2[(col+1)*8 +: 8];  w21 <= line2[(col+2)*8 +: 8];  w22 <= line2[(col+3)*8 +: 8];
                 end
             end
-            else begin
+
+            if (!buffer_valid) begin
                 window_valid <= 1'b0;
                 col          <= 5'd0;
             end
         end
     end
 
-    // ---- Matrix display ----
-    // window_valid is set the same cycle as w00..w22 are latched,
-    // and display_col matches them.
+    // Display each window when valid.
+    // Gate with mac_done so col=00 prints only once (on the cycle mac_done first
+    // fires after window_valid rises, not on the initial latency cycle).
+    // Gate with display_col < 30 to suppress the ghost col=30 rollover print.
     always @(posedge clk) begin
-        if (window_valid) begin
-            $display("[WG] col=%0d", display_col);
-            $display("     %02h  %02h  %02h", w00, w01, w02);
-            $display("     %02h  %02h  %02h", w10, w11, w12);
-            $display("     %02h  %02h  %02h", w20, w21, w22);
-            $display("     -----------");
+        if (window_valid && mac_done && display_col < 5'd31) begin
+        
+            $display("[WG] col=%02d  |  %02X  %02X  %02X  |",
+                     display_col, w00, w01, w02);
+            $display("[WG]        |  %02X  %02X  %02X  |",
+                     w10, w11, w12);
+            $display("[WG]        |  %02X  %02X  %02X  |",
+                     w20, w21, w22);
+            $display("[WG]        -------------------");
         end
     end
+
 endmodule
