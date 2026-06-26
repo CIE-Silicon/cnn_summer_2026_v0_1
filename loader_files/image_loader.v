@@ -43,7 +43,7 @@ module line_buffer_loader(
     output reg  [271:0] line1,
     output reg  [271:0] line2
 );
-    localparam TOTAL_ROWS    = 8;
+    localparam TOTAL_ROWS    = 10;
     localparam IDLE          = 4'd0;
     localparam ISSUE_ADDR    = 4'd1;
     localparam WAIT1         = 4'd2;
@@ -141,25 +141,25 @@ endtask
             COPY_ROW: begin
                 case (row_number)
                     5'd0: begin
-                        line0      <= {8'b0000,temp_reg,8'b000};
+                        line0      <= {8'b0000,temp_reg,8'b0000};
                         $display("[LBL] ---- Loaded into line0 (row 0) ----");
-                        display_row({8'h01,temp_reg,8'h02},0);
+                        display_row({8'h00,temp_reg,8'h00},0);
                         row_number <= 5'd1;
                         bram_addr  <= bram_addr + 1'b1;
                         state      <= ISSUE_ADDR;
                     end
                     5'd1: begin
-                        line1      <= {8'b0000,temp_reg,8'b000};
+                        line1      <= {8'b0000,temp_reg,8'b0000};
                         $display("[LBL] ---- Loaded into line1 (row 1) ----");
-                        display_row({8'h01,temp_reg,8'h02}, 1);
+                        display_row({8'h00,temp_reg,8'h00}, 1);
                         row_number <= 5'd2;
                         bram_addr  <= bram_addr + 1'b1;
                         state      <= ISSUE_ADDR;
                     end
                     5'd2: begin
-                        line2        <= {8'b0000,temp_reg,8'b000};
+                        line2        <= {8'b0000,temp_reg,8'b0000};
                         $display("[LBL] ---- Loaded into line2 (row 2) ----");
-                        display_row({8'h01,temp_reg,8'h02}, 2);
+                        display_row({8'h00,temp_reg,8'h00}, 2);
                         $display("[LBL] Initial 3 rows ready - asserting buffer_valid");
                         row_number   <= 5'd3;
                         buffer_valid <= 1'b1;
@@ -189,7 +189,8 @@ endtask
             SHIFT_ROWS: begin
                 line0        <= line1;
                 line1        <= line2;
-                line2        <= temp_reg;
+                
+                line2        <= {8'b0, temp_reg, 8'b0};
                 buffer_valid <= 1'b1;
                 $display("[LBL] ---- Shifting rows - inserting row %0d into line2 ----", row_number);
                 display_row({8'h00,temp_reg,8'h00}, row_number);
@@ -198,15 +199,19 @@ endtask
             end
 
             FINISH: begin
+                // FIX: pulse done for exactly one cycle then hold in a quiescent state
+                // so that all_rows_done (= image_load_done) does not stay permanently
+                // HIGH and spam the TB monitor on every subsequent clock edge.
                 done         <= 1'b1;
                 buffer_valid <= 1'b0;
                 $display("[LBL] ============================================");
                 $display("[LBL] ALL %0d ROWS PROCESSED - DONE", TOTAL_ROWS);
                 $display("[LBL] ============================================");
+                state <= IDLE;   // Return to IDLE so done auto-clears next cycle
             end
 
             default: state <= IDLE;
             endcase
         end
     end
-endmodule
+endmodule  
