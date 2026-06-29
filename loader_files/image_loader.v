@@ -1,217 +1,266 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Company: CIE Silicon
-// Engineer: Anagha Saraswathy,Manvi Manjunath
-//
-// Create Date:
-// Design Name: CNN SoC Accelerator
-// Module Name: line_buffer_loader
-// Project Name: CNN SoC
-// Target Devices: Artix-7 BASYS3
-//
-// Description:
-// Loads image rows from shared BRAM into three line buffers.
-// Maintains a sliding 3-row window by shifting rows and loading
-// new image rows as convolution progresses.
-//
-// Dependencies:
-// Shared BRAM
-//
-// Revision:
-// Revision 0.01 - File Created
-//
-// Additional Comments:
-// Generates buffer_valid when three valid image rows are
-// available for window generation.
-//////////////////////////////////////////////////////////////////////////////////
-// ============================================================
-//  line_buffer_loader  (same logic as before, TOTAL_ROWS=8)
-// ============================================================
 `timescale 1ns / 1ps
-// ============================================================
-//  line_buffer_loader  (TOTAL_ROWS=8) with display statements
-// ============================================================
-module line_buffer_loader(
-    input  wire        clk,
-    input  wire        rst,
-    input  wire        start,
-    input  wire        conv_exe_done,
-    output reg         buffer_valid,
-    output reg  [7:0]  bram_addr,
-    input  wire [31:0] bram_rdata,
-    output reg         done,
-    output reg  [271:0] line0,
-    output reg  [271:0] line1,
-    output reg  [271:0] line2
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Engineer      : Anagha Saraswathy
+// Last Modified : 28.06.2026
+// Module Name   : image_loader_fsm
+// Project Name  : CNN SOC
+// Description   :
+//      Loads image rows from BRAM into a three-line sliding buffer.
+//      Reads 8 words (32-bit) per row into a 256-bit temp register,
+//      then copies into line0/line1/line2 with one byte of zero-padding
+//      on each side (272-bit total per line).
+//      Rows 0 to 2 fill the initial buffer then asserts buffer_valid.
+//      Each subsequent row shifts the buffer down and loads a new row.
+//      Waits for conv_exe_done between each set. Pulses done for one
+//      cycle when all TOTAL_ROWS have been processed.
+//      bram_addr is driven combinationally from base_addr and word_count.
+//      Assumes BRAM configured with no output register (1-cycle latency).
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ module image_loader_fsm
+#(
+	parameter TOTAL_ROWS = 8
+)(
+	input  wire         clk,
+	input  wire         resetn,
+	input  wire         start,         // pulse high to begin loading
+	input  wire         conv_exe_done, // asserted when convolution is complete
+	input  wire [31:0]  bram_rdata,    // read data from BRAM
+
+	output wire [7:0]   bram_addr,    // word address to BRAM (combinational)
+	output reg          buffer_valid,  // high when line0/line1/line2 are ready
+	output reg          done,          // pulses one cycle when all rows done
+	output reg  [271:0] line0,         // top line of 3x3 window buffer
+	output reg  [271:0] line1,         // middle line
+	output reg  [271:0] line2          // bottom line
 );
-    localparam TOTAL_ROWS    = 10;
-    localparam IDLE          = 4'd0;
-    localparam ISSUE_ADDR    = 4'd1;
-    localparam WAIT1         = 4'd2;
-    localparam WAIT2         = 4'd3;
-    localparam STORE_DATA    = 4'd4;
-    localparam STORE_LAST    = 4'd5;
-    localparam COPY_ROW      = 4'd6;
-    localparam WAIT_FOR_CONV = 4'd7;
-    localparam SHIFT_ROWS    = 4'd8;
-    localparam FINISH        = 4'd9;
 
-    reg [3:0]   state;
-    reg [2:0]   word_count;
-    reg [4:0]   row_number;
-    reg [255:0] temp_reg;
-    reg [31:0]  word_data;
+//-----------------------------//
+// FSM state encoding          //
+//-----------------------------//
+parameter [2:0]
+	IDLE          = 3'd0,
+	WAIT          = 3'd1,
+	STORE_DATA    = 3'd2,
+	STORE_LAST    = 3'd3,
+	COPY_ROW      = 3'd4,
+	WAIT_FOR_CONV = 3'd5,
+	SHIFT_ROWS    = 3'd6,
+	FINISH        = 3'd7;
 
-    // For pixel display
-    integer p;
+//--------------------//
+// State registers    //
+//--------------------//
+reg [2:0] state;
+reg [2:0] next_state;
 
-    task display_row;
-    input [271:0] row;
-    input [4:0]   rnum;
-    integer p;
-    begin
-        $write("[LBL]   Row %0d pixels: ", rnum);
+//------------------------------------//
+// Registered datapath signals        //
+//------------------------------------//
+reg [2:0]   word_count;
+reg [4:0]   row_number;
+reg [7:0]   base_addr;
+reg [255:0] temp_reg;
 
-        for (p = 33; p >= 0; p = p - 1)
-            $write("%02X ", row[p*8 +: 8]);
+//------------------------------------//
+// Combinational next value signals   //
+//------------------------------------//
+reg [2:0] word_count_next;
+reg [4:0] row_number_next;
+reg [7:0] base_addr_next;
 
-        $display("");
-    end
-endtask
+//=========================================================//
+// Block 1 - Sequential: state register                    //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+		state <= IDLE;
+	else
+		state <= next_state;
+end
 
-    always @(posedge clk) begin
-        if (rst) begin
-            state        <= IDLE;
-            bram_addr    <= 8'd0;
-            word_count   <= 3'd0;
-            row_number   <= 5'd0;
-            buffer_valid <= 1'b0;
-            done         <= 1'b0;
-            temp_reg     <= 256'd0;
-            word_data    <= 32'd0;
-            line0        <= 272'd0;
-            line1        <= 272'd0;
-            line2        <= 272'd0;
-        end
-        else begin
-            case (state)
+//=========================================================//
+// Block 2 - Combinational: next state and next values     //
+//=========================================================//
+always @(*)
+begin
+	next_state      = state;
+	word_count_next = word_count;
+	row_number_next = row_number;
+	base_addr_next  = base_addr;
 
-            IDLE: begin
-                done         <= 1'b0;
-                buffer_valid <= 1'b0;
-                if (start) begin
-                    bram_addr  <= 8'd0;
-                    word_count <= 3'd0;
-                    row_number <= 5'd0;
-                    $display("[LBL] ============================================");
-                    $display("[LBL] Image loading started - %0d rows x 32 pixels", TOTAL_ROWS);
-                    $display("[LBL] ============================================");
-                    state      <= ISSUE_ADDR;
-                end
-            end
+	case (state)
+		IDLE:
+		begin
+			if (start)
+			begin
+				word_count_next = 3'd0;
+				row_number_next = 5'd0;
+				base_addr_next  = 8'd0;
+				next_state      = WAIT;
+			end
+		end
 
-            ISSUE_ADDR: state <= WAIT1;
-            WAIT1:      state <= WAIT2;
+		WAIT:
+			next_state = STORE_DATA;
 
-            WAIT2: begin
-                word_data <= bram_rdata;
-                state     <= STORE_DATA;
-            end
+		STORE_DATA:
+		begin
+			if (word_count == 3'd7)
+			begin
+				word_count_next = 3'd0;
+				next_state      = STORE_LAST;
+			end
+			else
+			begin
+				word_count_next = word_count + 1'b1;
+				next_state      = WAIT;
+			end
+		end
 
-            STORE_DATA: begin
-                temp_reg[word_count*32 +: 32] <= word_data;
-                $display("[LBL] BRAM[%0d] = 0x%08X  → row=%0d word=%0d",
-                         bram_addr, word_data, row_number, word_count);
-                if (word_count == 3'd7) begin
-                    state <= STORE_LAST;
-                end else begin
-                    word_count <= word_count + 1'b1;
-                    bram_addr  <= bram_addr + 1'b1;
-                    state      <= ISSUE_ADDR;
-                end
-            end
+		STORE_LAST:
+		begin
+			if (row_number < 5'd3)
+				next_state = COPY_ROW;
+			else
+				next_state = SHIFT_ROWS;
+		end
 
-            STORE_LAST: begin
-                word_count <= 3'd0;
-                if (row_number < 5'd3)
-                    state <= COPY_ROW;
-                else
-                    state <= SHIFT_ROWS;
-            end
+		COPY_ROW:
+		begin
+			row_number_next = row_number + 1'b1;
+			if (row_number == 5'd2)
+				next_state = WAIT_FOR_CONV;
+			else
+			begin
+				base_addr_next  = base_addr + 8'd8;
+				word_count_next = 3'd0;
+				next_state      = WAIT;
+			end
+		end
 
-            COPY_ROW: begin
-                case (row_number)
-                    5'd0: begin
-                        line0      <= {8'b0000,temp_reg,8'b0000};
-                        $display("[LBL] ---- Loaded into line0 (row 0) ----");
-                        display_row({8'h00,temp_reg,8'h00},0);
-                        row_number <= 5'd1;
-                        bram_addr  <= bram_addr + 1'b1;
-                        state      <= ISSUE_ADDR;
-                    end
-                    5'd1: begin
-                        line1      <= {8'b0000,temp_reg,8'b0000};
-                        $display("[LBL] ---- Loaded into line1 (row 1) ----");
-                        display_row({8'h00,temp_reg,8'h00}, 1);
-                        row_number <= 5'd2;
-                        bram_addr  <= bram_addr + 1'b1;
-                        state      <= ISSUE_ADDR;
-                    end
-                    5'd2: begin
-                        line2        <= {8'b0000,temp_reg,8'b0000};
-                        $display("[LBL] ---- Loaded into line2 (row 2) ----");
-                        display_row({8'h00,temp_reg,8'h00}, 2);
-                        $display("[LBL] Initial 3 rows ready - asserting buffer_valid");
-                        row_number   <= 5'd3;
-                        buffer_valid <= 1'b1;
-                        state        <= WAIT_FOR_CONV;
-                    end
-                    default: state <= SHIFT_ROWS;
-                endcase
-            end
+		WAIT_FOR_CONV:
+		begin
+			if (conv_exe_done)
+			begin
+				if (row_number < TOTAL_ROWS)
+				begin
+					base_addr_next  = base_addr + 8'd8;
+					word_count_next = 3'd0;
+					next_state      = WAIT;
+				end
+				else
+					next_state = FINISH;
+			end
+		end
 
-            WAIT_FOR_CONV: begin
-                buffer_valid <= 1'b1;
-                if (conv_exe_done) begin
-                    buffer_valid <= 1'b0;
-                    temp_reg     <= 256'd0;
-                    word_count   <= 3'd0;
-                    if (row_number < TOTAL_ROWS) begin
-                        $display("[LBL] conv_exe_done - loading next row %0d from BRAM[%0d]",
-                                 row_number, bram_addr + 1);
-                        bram_addr <= bram_addr + 1'b1;
-                        state     <= ISSUE_ADDR;
-                    end else begin
-                        state <= FINISH;
-                    end
-                end
-            end
+		SHIFT_ROWS:
+		begin
+			row_number_next = row_number + 1'b1;
+			next_state      = WAIT_FOR_CONV;
+		end
 
-            SHIFT_ROWS: begin
-                line0        <= line1;
-                line1        <= line2;
-                
-                line2        <= {8'b0, temp_reg, 8'b0};
-                buffer_valid <= 1'b1;
-                $display("[LBL] ---- Shifting rows - inserting row %0d into line2 ----", row_number);
-                display_row({8'h00,temp_reg,8'h00}, row_number);
-                row_number <= row_number + 1'b1;
-                state      <= WAIT_FOR_CONV;
-            end
+		FINISH:
+			next_state = IDLE;
 
-            FINISH: begin
-                // FIX: pulse done for exactly one cycle then hold in a quiescent state
-                // so that all_rows_done (= image_load_done) does not stay permanently
-                // HIGH and spam the TB monitor on every subsequent clock edge.
-                done         <= 1'b1;
-                buffer_valid <= 1'b0;
-                $display("[LBL] ============================================");
-                $display("[LBL] ALL %0d ROWS PROCESSED - DONE", TOTAL_ROWS);
-                $display("[LBL] ============================================");
-                state <= IDLE;   // Return to IDLE so done auto-clears next cycle
-            end
+		default:
+			next_state = IDLE;
+	endcase
+end
 
-            default: state <= IDLE;
-            endcase
-        end
-    end
-endmodule  
+//=========================================================//
+// Block 3 - Sequential: datapath and registered outputs   //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+	begin
+		word_count   <= 3'd0;
+		row_number   <= 5'd0;
+		base_addr    <= 8'd0;
+		buffer_valid <= 1'b0;
+		done         <= 1'b0;
+		temp_reg     <= 256'd0;
+		line0        <= 272'd0;
+		line1        <= 272'd0;
+		line2        <= 272'd0;
+	end
+	else
+	begin
+		done         <= 1'b0;
+		buffer_valid <= 1'b0;
+
+		case (state)
+			IDLE:
+			begin
+				if (start)
+				begin
+					word_count <= 3'd0;
+					row_number <= 5'd0;
+					base_addr  <= 8'd0;
+					temp_reg   <= 256'd0;
+				end
+			end
+
+			STORE_DATA:
+			begin
+				temp_reg[word_count*32 +: 32] <= bram_rdata;
+				word_count                     <= word_count_next;
+			end
+
+			COPY_ROW:
+			begin
+				row_number <= row_number_next;
+				base_addr  <= base_addr_next;
+				word_count <= word_count_next;
+				case (row_number)
+					5'd0:
+						line0 <= {8'd0, temp_reg, 8'd0};
+					5'd1:
+						line1 <= {8'd0, temp_reg, 8'd0};
+					5'd2:
+					begin
+						line2        <= {8'd0, temp_reg, 8'd0};
+						buffer_valid <= 1'b1;
+					end
+					default: ;
+				endcase
+			end
+
+			WAIT_FOR_CONV:
+			begin
+				buffer_valid <= 1'b1;
+				if (conv_exe_done)
+				begin
+					buffer_valid <= 1'b0;
+					temp_reg     <= 256'd0;
+					base_addr    <= base_addr_next;
+					word_count   <= word_count_next;
+				end
+			end
+
+			SHIFT_ROWS:
+			begin
+				line0        <= line1;
+				line1        <= line2;
+				line2        <= {8'd0, temp_reg, 8'd0};
+				buffer_valid <= 1'b1;
+				row_number   <= row_number + 1'b1;
+				temp_reg     <= 256'd0;
+			end
+
+			FINISH:
+				done <= 1'b1;
+
+			default: ;
+		endcase
+	end
+end
+
+//--------------------------------------------//
+// Continuous assign - combinational bram_addr //
+//--------------------------------------------//
+assign bram_addr = base_addr + {5'd0, word_count};
+
+endmodule
