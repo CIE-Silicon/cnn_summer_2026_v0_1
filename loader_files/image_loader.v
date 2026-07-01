@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Engineer      : Anagha Saraswathy
-// Last Modified : 28.06.2026
+// Last Modified : 01.07.2026
 // Module Name   : image_loader_fsm
 // Project Name  : CNN SOC
 // Description   :
@@ -12,33 +12,35 @@
 //      Rows 0 to 2 fill the initial buffer then asserts buffer_valid.
 //      Each subsequent row shifts the buffer down and loads a new row.
 //      Waits for conv_exe_done between each set. Pulses done for one
-//      cycle when all TOTAL_ROWS have been processed.
+//      cycle when all num_channels rows have been processed.
 //      bram_addr is driven combinationally from base_addr and word_count.
+//      image_base_addr is a byte address from the decoder, converted to
+//      word address internally (>> 2, 9-bit).
 //      Assumes BRAM configured with no output register (1-cycle latency).
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
- module image_loader_fsm
-#(
-	parameter TOTAL_ROWS = 8
-)(
+(* DONT_TOUCH = "yes" *) module image_loader_fsm
+(
 	input  wire         clk,
 	input  wire         resetn,
-	input  wire         start,         // pulse high to begin loading
-	input  wire         conv_exe_done, // asserted when convolution is complete
-	input  wire [31:0]  bram_rdata,    // read data from BRAM
+	input  wire         start,            // pulse high to begin loading
+	input  wire         conv_exe_done,    // asserted when convolution is complete
+	input  wire [31:0]  bram_rdata,       // read data from BRAM
+	input  wire [31:0]  image_base_addr,  // byte address from decoder (>> 2 for word addr)
+	input  wire [6:0]   num_channels,     // number of channels from funct7
 
-	output wire [7:0]   bram_addr,    // word address to BRAM (combinational)
-	output reg          buffer_valid,  // high when line0/line1/line2 are ready
-	output reg          done,          // pulses one cycle when all rows done
-	output reg  [271:0] line0,         // top line of 3x3 window buffer
-	output reg  [271:0] line1,         // middle line
-	output reg  [271:0] line2          // bottom line
+	output wire [8:0]   bram_addr,        // word address to BRAM (combinational)
+	output reg          buffer_valid,     // high when line0/line1/line2 are ready
+	output reg          done,             // pulses one cycle when all rows done
+	output reg  [271:0] line0,            // top line of 3x3 window buffer
+	output reg  [271:0] line1,            // middle line
+	output reg  [271:0] line2             // bottom line
 );
 
 //-----------------------------//
 // FSM state encoding          //
 //-----------------------------//
-parameter [2:0]
+localparam [2:0]
 	IDLE          = 3'd0,
 	WAIT          = 3'd1,
 	STORE_DATA    = 3'd2,
@@ -59,7 +61,7 @@ reg [2:0] next_state;
 //------------------------------------//
 reg [2:0]   word_count;
 reg [4:0]   row_number;
-reg [7:0]   base_addr;
+reg [8:0]   base_addr;
 reg [255:0] temp_reg;
 
 //------------------------------------//
@@ -67,7 +69,7 @@ reg [255:0] temp_reg;
 //------------------------------------//
 reg [2:0] word_count_next;
 reg [4:0] row_number_next;
-reg [7:0] base_addr_next;
+reg [8:0] base_addr_next;
 
 //=========================================================//
 // Block 1 - Sequential: state register                    //
@@ -97,7 +99,7 @@ begin
 			begin
 				word_count_next = 3'd0;
 				row_number_next = 5'd0;
-				base_addr_next  = 8'd0;
+				base_addr_next  = image_base_addr[10:2];  // byte addr >> 2 = word addr, 9-bit
 				next_state      = WAIT;
 			end
 		end
@@ -134,7 +136,7 @@ begin
 				next_state = WAIT_FOR_CONV;
 			else
 			begin
-				base_addr_next  = base_addr + 8'd8;
+				base_addr_next  = base_addr + 9'd8;
 				word_count_next = 3'd0;
 				next_state      = WAIT;
 			end
@@ -144,9 +146,9 @@ begin
 		begin
 			if (conv_exe_done)
 			begin
-				if (row_number < TOTAL_ROWS)
+				if (row_number < {2'b00, num_channels})
 				begin
-					base_addr_next  = base_addr + 8'd8;
+					base_addr_next  = base_addr + 9'd8;
 					word_count_next = 3'd0;
 					next_state      = WAIT;
 				end
@@ -178,7 +180,7 @@ begin
 	begin
 		word_count   <= 3'd0;
 		row_number   <= 5'd0;
-		base_addr    <= 8'd0;
+		base_addr    <= 9'd0;
 		buffer_valid <= 1'b0;
 		done         <= 1'b0;
 		temp_reg     <= 256'd0;
@@ -198,7 +200,7 @@ begin
 				begin
 					word_count <= 3'd0;
 					row_number <= 5'd0;
-					base_addr  <= 8'd0;
+					base_addr  <= base_addr_next;  // picks up image_base_addr[10:2]
 					temp_reg   <= 256'd0;
 				end
 			end
@@ -261,6 +263,6 @@ end
 //--------------------------------------------//
 // Continuous assign - combinational bram_addr //
 //--------------------------------------------//
-assign bram_addr = base_addr + {5'd0, word_count};
+assign bram_addr = base_addr + {6'd0, word_count};
 
 endmodule
