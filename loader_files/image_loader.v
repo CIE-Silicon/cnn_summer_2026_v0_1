@@ -228,11 +228,11 @@ begin
 				base_addr  <= base_addr_next;
 				word_count <= word_count_next;
 				case (row_number)
-					5'd0:
+					7'd0:
 						line0 <= {8'd0, temp_reg, 8'd0};
-					5'd1:
+					7'd1:
 						line1 <= {8'd0, temp_reg, 8'd0};
-					5'd2:
+					7'd2:
 					begin
 						line2        <= {8'd0, temp_reg, 8'd0};
 						buffer_valid <= 1'b1;
