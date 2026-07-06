@@ -16,20 +16,20 @@ module store_fsm(
     input  wire         resetn,
 
     // comes from mac
-    input  wire         mac_valid,       // 1-cycle pulse when a 256-bit output is ready
-    input  wire [255:0] y,               // 16 MACs * 16 bits = 256 bits
+    input  wire         mac_valid,       // pulses when a 256-bit output is ready
+    input  wire [255:0] y,               // 16 outputs * 16 bits = 256 bits
 
     // comes from decoder
     input  wire [31:0]  out_base_addr,
 
-    // BRAM_PORTA interface
+    // as per the bram ip 
     output reg  [31:0]  addra,
     output reg  [31:0]  dina,
     output reg           ena,
     output reg           wea,
 
-    // asks mac to halt during storing
-    output reg          store_halt
+    // to the mac
+    output reg          store_halt //to stop the mac after 2 mac_valid to stop the mac
 );
 
 
@@ -40,9 +40,9 @@ module store_fsm(
     reg state, next;
 
     // Counters
-    reg [1:0]  cycle_cnt;         // Tracks the 2 execution cycles (0, 1, 2)
-    reg [3:0]  map_select_cnt;    // Counts 0 to 15 (your 16 feature maps)
-    reg [15:0] pixel_pair_offset; // Tracks address movement within the map space
+    reg [1:0]  cycle_cnt;         // tracks the 2 execution cycles (0, 1, 2)
+    reg [3:0]  map_select_cnt;    // counts 0 to 15 (16 feature maps)
+    reg [15:0] pixel_pair_offset; // tracks address movement within 512 lines 
 
     // 256-bit Shift Registers
     reg [255:0] reg_cycle0;
@@ -73,8 +73,7 @@ module store_fsm(
 
             WRITE:
             begin
-                // no ready handshake anymore - write completes every cycle,
-                // so we move to IDLE the same cycle the 16th word is written
+                // move to IDLE the same cycle the 16th word is written
                 if (map_select_cnt == 4'd15)
                     next = IDLE;
             end
@@ -129,10 +128,10 @@ module store_fsm(
                     end
                     else if (mac_valid && cycle_cnt == 2'd1)
                     begin
-                            reg_cycle1     <= y;
-                            cycle_cnt      <= 2'd2;
-                            store_halt     <= 1'b1;
-                            map_select_cnt <= 4'd0;
+                        reg_cycle1     <= y;
+                        cycle_cnt      <= 2'd2;
+                        store_halt     <= 1'b1;
+                        map_select_cnt <= 4'd0;
                     end
                     else
                     begin
@@ -142,7 +141,8 @@ module store_fsm(
 
                 end
 
-                WRITE: begin
+                WRITE: 
+                begin
                     // single-cycle synchronous write, no wait needed
                     ena   <= 1'b1;
                     wea   <= 1'b1;
@@ -158,11 +158,7 @@ module store_fsm(
                         pixel_pair_offset <= pixel_pair_offset + 1'b1;
                         cycle_cnt         <= 2'd0;
                         store_halt        <= 1'b0;
-                        // NOTE: do NOT clear ena/wea here - this cycle is still
-                        // writing the 16th (last) word. IDLE state (entered next
-                        // cycle via combinational next-state) already clears
-                        // ena/wea unconditionally, so they'll drop one cycle
-                        // later, after this final write has actually landed.
+                        //ena and wea is made low in the idle state
                     end else
                     begin
                         map_select_cnt <= map_select_cnt + 1'b1;
