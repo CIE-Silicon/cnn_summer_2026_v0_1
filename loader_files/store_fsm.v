@@ -6,9 +6,8 @@
 // Module Name: store_fsm.v
 // Project Name: CNN Summer
 // Description:
-//  uses 2 256 bit shift registers and drives BRAM_PORTA directly
-//  (ena/wea/addra/dina) - no ready handshake, BRAM writes are single-cycle
-//  synchronous so we don't need to wait for an ack.
+//  uses 2 256 bit shift registers and drives bram directly
+//  (ena/wea/addra/dina)
 ///////////////////////////////////////////////////////////////////////////////////
 
 module store_fsm(
