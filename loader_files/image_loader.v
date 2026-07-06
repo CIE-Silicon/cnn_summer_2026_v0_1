@@ -60,7 +60,7 @@ reg [2:0] next_state;
 // Registered datapath signals        //
 //------------------------------------//
 reg [2:0]   word_count;
-reg [4:0]   row_number;
+reg [6:0]   row_number;
 reg [8:0]   base_addr;
 reg [255:0] temp_reg;
 
@@ -68,8 +68,19 @@ reg [255:0] temp_reg;
 // Combinational next value signals   //
 //------------------------------------//
 reg [2:0] word_count_next;
-reg [4:0] row_number_next;
+reg [6:0] row_number_next;
 reg [8:0] base_addr_next;
+
+reg [6:0] total_rows;
+
+always @(*)
+begin
+    case (num_channels)
+        7'd1:    total_rows = 7'd34;
+        7'd3:    total_rows = 7'd102;
+        default: total_rows = 7'd34;
+    endcase
+end
 
 //=========================================================//
 // Block 1 - Sequential: state register                    //
@@ -98,7 +109,7 @@ begin
 			if (start)
 			begin
 				word_count_next = 3'd0;
-				row_number_next = 5'd0;
+				row_number_next = 7'd0;
 				base_addr_next  = image_base_addr[10:2];  // byte addr >> 2 = word addr, 9-bit
 				next_state      = WAIT;
 			end
@@ -123,7 +134,7 @@ begin
 
 		STORE_LAST:
 		begin
-			if (row_number < 5'd3)
+			if (row_number < 7'd3)
 				next_state = COPY_ROW;
 			else
 				next_state = SHIFT_ROWS;
@@ -132,7 +143,7 @@ begin
 		COPY_ROW:
 		begin
 			row_number_next = row_number + 1'b1;
-			if (row_number == 5'd2)
+			if (row_number == 7'd2)
 				next_state = WAIT_FOR_CONV;
 			else
 			begin
@@ -146,7 +157,7 @@ begin
 		begin
 			if (conv_exe_done)
 			begin
-				if (row_number < {2'b00, num_channels})
+				if (row_number < total_rows)
 				begin
 					base_addr_next  = base_addr + 9'd8;
 					word_count_next = 3'd0;
@@ -179,7 +190,7 @@ begin
 	if (!resetn)
 	begin
 		word_count   <= 3'd0;
-		row_number   <= 5'd0;
+		row_number   <= 7'd0;
 		base_addr    <= 9'd0;
 		buffer_valid <= 1'b0;
 		done         <= 1'b0;
@@ -199,7 +210,7 @@ begin
 				if (start)
 				begin
 					word_count <= 3'd0;
-					row_number <= 5'd0;
+					row_number <= 7'd0;
 					base_addr  <= base_addr_next;  // picks up image_base_addr[10:2]
 					temp_reg   <= 256'd0;
 				end
