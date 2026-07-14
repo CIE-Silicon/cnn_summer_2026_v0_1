@@ -84,6 +84,7 @@ module picorv32 #(
 	parameter [ 0:0] CATCH_ILLINSN = 1,
 	parameter [ 0:0] ENABLE_PCPI = 1,
 	parameter [ 0:0] ENABLE_DSQ = 1,
+	parameter [ 0:0] ENABLE_CNN = 1,
 	parameter [ 0:0] ENABLE_MUL = 1,
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
@@ -167,7 +168,18 @@ module picorv32 #(
 
 	// Trace Interface
 	output reg        trace_valid,
-	output reg [35:0] trace_data
+	output reg [35:0] trace_data,
+	
+	output wire        image_start,
+	output wire        weight_start,
+	output wire [31:0] image_base_addr,
+	output wire [31:0] weight_base_addr,
+	output wire [31:0] dest_base_addr,
+	output wire [6:0]  num_featuremaps,
+	output wire [6:0]  num_channels,
+	output wire [6:0]  image_size,
+	input  wire        image_load_ready,
+	input  wire        weight_load_ready
 );
 	localparam integer irq_timer = 0;
 	localparam integer irq_ebreak = 1;
@@ -177,7 +189,7 @@ module picorv32 #(
 	localparam integer regfile_size = (ENABLE_REGS_16_31 ? 32 : 16) + 4*ENABLE_IRQ*ENABLE_IRQ_QREGS;
 	localparam integer regindex_bits = (ENABLE_REGS_16_31 ? 5 : 4) + ENABLE_IRQ*ENABLE_IRQ_QREGS;
 
-	localparam WITH_PCPI = ENABLE_PCPI || ENABLE_MUL || ENABLE_FAST_MUL || ENABLE_DIV|| ENABLE_DSQ;
+	localparam WITH_PCPI = ENABLE_PCPI || ENABLE_MUL || ENABLE_FAST_MUL || ENABLE_DIV || ENABLE_DSQ || ENABLE_CNN;
 	localparam [35:0] TRACE_BRANCH = {4'b 0001, 32'b 0};
 	localparam [35:0] TRACE_ADDR   = {4'b 0010, 32'b 0};
 	localparam [35:0] TRACE_IRQ    = {4'b 1000, 32'b 0};
@@ -278,8 +290,21 @@ module picorv32 #(
 	wire [31:0] pcpi_dsq_rd;
 	wire        pcpi_dsq_wait;
 	wire        pcpi_dsq_ready;
-
+	
+    wire        pcpi_cnn_wr;
+    wire [31:0] pcpi_cnn_rd;
+    wire        pcpi_cnn_wait;
+    wire        pcpi_cnn_ready;
+    wire        pcpi_cnn_image_start;
+    wire        pcpi_cnn_weight_start;
+    wire [31:0] pcpi_cnn_image_base_addr;
+    wire [31:0] pcpi_cnn_weight_base_addr;
+    wire [31:0] pcpi_cnn_dest_base_addr;
+    wire [6:0]  pcpi_cnn_num_featuremaps;
+    wire [6:0]  pcpi_cnn_num_channels;
+    wire [6:0]  pcpi_cnn_image_size; 
 	reg        pcpi_int_wr;
+	
 	reg [31:0] pcpi_int_rd;
 	reg        pcpi_int_wait;
 	reg        pcpi_int_ready;
@@ -356,12 +381,62 @@ module picorv32 #(
 		assign pcpi_dsq_wait  = 0;
 		assign pcpi_dsq_ready = 0;
 	end endgenerate
+	
+   generate if (ENABLE_CNN) begin :gen_cnn
+		picorv32_pcpi_cnn pcpi_cnn (
+			.clk              (clk                       ),
+			.resetn           (resetn                    ),
+			.pcpi_valid       (pcpi_valid                ),
+			.pcpi_insn        (pcpi_insn                 ),
+			.pcpi_rs1         (pcpi_rs1                  ),
+			.pcpi_rs2         (pcpi_rs2                  ),
+			.weight_load_ready(weight_load_ready         ),
+			.image_load_ready  (image_load_ready          ),
+			.pcpi_wr          (pcpi_cnn_wr               ),
+			.pcpi_rd          (pcpi_cnn_rd               ),
+			.pcpi_wait        (pcpi_cnn_wait             ),
+			.pcpi_ready       (pcpi_cnn_ready            ),
+			.weight_start     (pcpi_cnn_weight_start     ),
+			.image_start      (pcpi_cnn_image_start      ),
+			.weight_base_addr (pcpi_cnn_weight_base_addr ),
+			.image_base_addr  (pcpi_cnn_image_base_addr  ),
+			.dest_base_addr   (pcpi_cnn_dest_base_addr   ),
+			.num_featuremaps  (pcpi_cnn_num_featuremaps  ),
+			.num_channels     (pcpi_cnn_num_channels     ),
+			.image_size       (pcpi_cnn_image_size       )
+		);
+	end else begin
+		assign pcpi_cnn_wr               = 0;
+		assign pcpi_cnn_rd               = 32'bx;
+		assign pcpi_cnn_wait             = 0;
+		assign pcpi_cnn_ready            = 0;
+		assign pcpi_cnn_weight_start     = 0;
+		assign pcpi_cnn_image_start      = 0;
+		assign pcpi_cnn_weight_base_addr = 32'd0;
+		assign pcpi_cnn_image_base_addr  = 32'd0;
+		assign pcpi_cnn_dest_base_addr   = 32'd0;
+		assign pcpi_cnn_num_featuremaps  = 7'd0;
+		assign pcpi_cnn_num_channels     = 7'd0;
+		assign pcpi_cnn_image_size       = 7'd0;
+	end endgenerate
+	
 
+	// CNN signals routed to top-level ports
+	assign image_start      = pcpi_cnn_image_start;
+	assign weight_start     = pcpi_cnn_weight_start;
+	assign image_base_addr  = pcpi_cnn_image_base_addr;
+	assign weight_base_addr = pcpi_cnn_weight_base_addr;
+	assign dest_base_addr   = pcpi_cnn_dest_base_addr;
+	assign num_featuremaps  = pcpi_cnn_num_featuremaps;
+	assign num_channels     = pcpi_cnn_num_channels;
+	assign image_size       = pcpi_cnn_image_size;
+	
+	
 	always @* begin
 		pcpi_int_wr = 0;
 		pcpi_int_rd = 32'bx;
-		pcpi_int_wait  = |{ENABLE_PCPI && pcpi_wait,  (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_wait,  ENABLE_DIV && pcpi_div_wait, ENABLE_DSQ && pcpi_dsq_wait};
-		pcpi_int_ready = |{ENABLE_PCPI && pcpi_ready, (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready, ENABLE_DIV && pcpi_div_ready, ENABLE_DSQ && pcpi_dsq_ready};
+		pcpi_int_wait  = |{ENABLE_PCPI && pcpi_wait,  (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_wait,  ENABLE_DIV && pcpi_div_wait, ENABLE_DSQ && pcpi_dsq_wait,ENABLE_CNN && pcpi_cnn_wait};
+		pcpi_int_ready = |{ENABLE_PCPI && pcpi_ready, (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready, ENABLE_DIV && pcpi_div_ready, ENABLE_DSQ && pcpi_dsq_ready,ENABLE_CNN && pcpi_cnn_ready};
 
 		(* parallel_case *)
 		case (1'b1)
@@ -382,7 +457,10 @@ module picorv32 #(
 				pcpi_int_wr = pcpi_dsq_wr;
 				pcpi_int_rd = pcpi_dsq_rd;
 			end
-
+            ENABLE_CNN && pcpi_cnn_ready: begin
+			    pcpi_int_wr = pcpi_cnn_wr;
+			    pcpi_int_rd = pcpi_cnn_rd;
+		end
 		endcase
 	end
 
@@ -2734,7 +2812,214 @@ module picorv32_pcpi_dsq (
 endmodule
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Engineer      : Anagha Saraswathy
+// Last Modified : 01.07.2026
+// Module Name   : picorv32_pcpi_cnn
+// Project Name  : CNN SOC
+// Description   :
+//      Decodes CNN_LD_WT (funct3=000) and CNN_LD_IMG (funct3=001)
+//      custom instructions via the PicoRV32 internal PCPI bus.
+//      funct7 carries num_featuremaps (CNN_LD_WT) and num_channels (CNN_LD_IMG).
+//      CNN_LD_WT  : stalls CPU via pcpi_wait until weight_load_ready
+//                   (driven by real weight_loader_fsm.done).
+//      CNN_LD_IMG : stalls CPU via pcpi_wait until image_load_done
+//                   (driven by real image_loader_fsm.done).
+//      weight_start/image_start are registered 1-cycle pulses - fire
+//      one cycle after first detection so base addresses are stable.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Engineer      : Anagha Saraswathy
+// Last Modified : 01.07.2026
+// Module Name   : picorv32_pcpi_cnn
+// Project Name  : Silicon SoC kNN
+// Description   :
+//      Decodes CNN_LD_WT (funct3=000) and CNN_LD_IMG (funct3=001)
+//      via PicoRV32 PCPI bus.
+//      wt_stall_active / img_stall_active are needed because pcpi_valid
+//      is a LEVEL signal (stays high every cycle during stall). Without
+//      them, Block 3 would re-fire every stall cycle. These latches ensure
+//      start pulses fire exactly once and addresses are latched once.
+//      Address latching uses a 2-stage pipeline (wt_latch_pending /
+//      img_latch_pending) so pcpi_rs1/rs2 are guaranteed stable when
+//      captured (they settle one cycle after pcpi_valid goes high).
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+module picorv32_pcpi_cnn
+(
+	input              clk,
+	input              resetn,
+
+	input              pcpi_valid,
+	input      [31:0]  pcpi_insn,
+	input      [31:0]  pcpi_rs1,
+	input      [31:0]  pcpi_rs2,
+
+	// From real FSMs
+	input  wire        weight_load_ready,
+	input  wire        image_load_ready,
+
+	// PCPI bus outputs
+	output wire        pcpi_wr,
+	output reg  [31:0] pcpi_rd,
+	output reg         pcpi_wait,
+	output wire        pcpi_ready,
+
+	// Start pulses to FSMs (registered, 1 cycle wide)
+	output reg         weight_start,
+	output reg         image_start,
+
+	// Base addresses latched from instruction operands
+	output reg  [31:0] weight_base_addr,
+	output reg  [31:0] image_base_addr,
+	output reg  [31:0] dest_base_addr,
+
+	// Config from funct7
+	output reg  [6:0]  num_featuremaps,
+	output reg  [6:0]  num_channels,
+	output reg  [6:0]  image_size
+);
+
+//--------------------//
+// Internal wires     //
+//--------------------//
+wire instr_cnn;
+wire CNN_LD_WT;
+wire CNN_LD_IMG;
+
+//--------------------------//
+// Internal registers       //
+//--------------------------//
+reg wt_stall_active;
+reg img_stall_active;
+reg wt_latch_pending;   // fires 1 cycle after first CNN_LD_WT detection
+reg img_latch_pending;  // fires 1 cycle after first CNN_LD_IMG detection
+
+//=========================================================//
+// Block 1 - Sequential: wt_stall_active latch             //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+		wt_stall_active <= 1'b0;
+	else
+	begin
+		if (CNN_LD_WT && !wt_stall_active)
+			wt_stall_active <= 1'b1;
+		if (weight_load_ready)
+			wt_stall_active <= 1'b0;
+	end
+end
+
+//=========================================================//
+// Block 2 - Sequential: img_stall_active latch            //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+		img_stall_active <= 1'b0;
+	else
+	begin
+		if (CNN_LD_IMG && !img_stall_active)
+			img_stall_active <= 1'b1;
+		if (image_load_ready)
+			img_stall_active <= 1'b0;
+	end
+end
+
+//=========================================================//
+// Block 3 - Sequential: latch pending flags               //
+// Registered one cycle after first detection so           //
+// pcpi_rs1/rs2 are stable when Block 4 captures them.    //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+	begin
+		wt_latch_pending  <= 1'b0;
+		img_latch_pending <= 1'b0;
+	end
+	else
+	begin
+		wt_latch_pending  <= CNN_LD_WT  && !wt_stall_active;
+		img_latch_pending <= CNN_LD_IMG && !img_stall_active;
+	end
+end
+
+//=========================================================//
+// Block 4 - Sequential: latch addresses, config, starts   //
+// Fires one cycle after first detection (via pending flags)//
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+	begin
+		weight_base_addr <= 32'd0;
+		image_base_addr  <= 32'd0;
+		dest_base_addr   <= 32'd0;
+		num_featuremaps  <= 7'd0;
+		num_channels     <= 7'd0;
+		image_size       <= 7'd0;
+		weight_start     <= 1'b0;
+		image_start      <= 1'b0;
+	end
+	else
+	begin
+		weight_start <= 1'b0;
+		image_start  <= 1'b0;
+
+		if (wt_latch_pending)
+		begin
+			weight_base_addr <= pcpi_rs1;
+            num_featuremaps  <= pcpi_insn[31:25];
+            num_channels     <= pcpi_rs2[6:0];    // NEW - from rs2
+            weight_start     <= 1'b1;
+		end
+
+		if (img_latch_pending)
+		begin
+			image_base_addr <= pcpi_rs1;
+			dest_base_addr  <= pcpi_rs2;
+			image_size   <= pcpi_insn[31:25];
+			image_start     <= 1'b1;
+		end
+	end
+end
+
+//=========================================================//
+// Block 5 - Sequential: pcpi_wait and pcpi_rd             //
+//=========================================================//
+always @(posedge clk)
+begin
+	if (!resetn)
+	begin
+		pcpi_wait <= 1'b0;
+		pcpi_rd   <= 32'd0;
+	end
+	else
+	begin
+		pcpi_wait <= 1'b0;
+		pcpi_rd   <= 32'd0;
+
+		if ((CNN_LD_WT  && !weight_load_ready) ||
+		    (CNN_LD_IMG && !image_load_ready))
+			pcpi_wait <= 1'b1;
+	end
+end
+
+//--------------------------------------------//
+// Continuous assigns - combinational outputs  //
+//--------------------------------------------//
+assign instr_cnn  = pcpi_valid && (pcpi_insn[6:0]   == 7'b0101011);
+assign CNN_LD_WT  = instr_cnn  && (pcpi_insn[14:12] == 3'b000);
+assign CNN_LD_IMG = instr_cnn  && (pcpi_insn[14:12] == 3'b001);
+
+assign pcpi_ready = (CNN_LD_WT  && weight_load_ready) ||
+                    (CNN_LD_IMG && image_load_ready);
+assign pcpi_wr    = pcpi_ready;
+
+endmodule
 
 
 /***************************************************************
