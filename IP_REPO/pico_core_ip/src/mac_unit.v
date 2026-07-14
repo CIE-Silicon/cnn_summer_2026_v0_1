@@ -55,19 +55,6 @@ reg signed [12:0] m0,m1,m2,m3,m4,m5,m6,m7,m8;
 wire signed [15:0] value;
 
 /*
- * Driving final Ouput port Sequqntially to avoid
- * timing issues. Allows using simple testbench to
- * accurately test the logic.
- */ 
-always @(posedge clk) 
-begin
-	if(!resetn)
-		y <= 0;
-	else
-		y <= value;
-end
-
-/*
  * Parallel 9 Multilpication Units.
  * Inputs a0 to a9 sign extended to prevent multiplication output
  * to have unsigned value.
