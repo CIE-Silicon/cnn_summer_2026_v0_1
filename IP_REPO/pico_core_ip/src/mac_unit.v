@@ -87,5 +87,18 @@ begin
 end
 
 assign value = m0 + m1 + m2 + m3 + m4 + m5 + m6 + m7 + m8;
-
+always @(posedge clk) 
+begin
+	if(!resetn) begin
+		y <= 0;
+	end else begin
+		if (value[15] == 1'b1) 
+		begin			
+			y <= 0;  
+		end else 
+		begin
+			y <= value;        
+		end
+	end
+end
 endmodule
