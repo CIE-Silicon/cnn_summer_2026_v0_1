@@ -1,0 +1,9 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../project_1.gen/sources_1/bd/design_1/ipshared/ec67/hdl" --include "../../../../../project_1.gen/sources_1/bd/design_1/ipshared/a415" \
+"TB_func_synth.v" \
+"../../../../../project_1.srcs/sim_1/imports/sim/s25fl128s.v" \
+"../../../../../project_1.srcs/sim_1/imports/sim/uart_receiver.v" \
+"../../../../../project_1.srcs/sim_1/imports/sim/TB.v" \
+
+# Do not sort compile order
+nosort
