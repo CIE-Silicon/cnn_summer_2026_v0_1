@@ -48,7 +48,7 @@
 
 
 // IP VLNV: user.org:user:picorv32_core:1.0
-// IP Revision: 30
+// IP Revision: 95
 
 `timescale 1ns/1ps
 

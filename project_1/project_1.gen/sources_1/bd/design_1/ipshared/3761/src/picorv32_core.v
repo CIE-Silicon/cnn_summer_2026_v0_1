@@ -22,6 +22,15 @@
 //   - Added bram_portb_* ports so the CNN coprocessor's shared BRAM
 //     Port B can reach the external dual-port blk_mem_gen_0 in the
 //     top-level block design (Step 5/6 of the SoC integration plan).
+// Revision 0.03 - SoC Integration, 13.07.2026:
+//   - cnn_coprocessor was never a real module - replaced the instance
+//     with cnn_coprocessor_wrapper.v, which instantiates the
+//     coprocessor team's own bram_arbiter / weight_loader_fsm /
+//     image_loader_fsm / window_generator / mac_parallel / store_fsm
+//     files unmodified, driving the shared BRAM's Port B instead of
+//     owning a private BRAM (that private-BRAM version stays in
+//     cnn_accelerator_wrapper.v for the coprocessor team's own
+//     standalone testing, untouched).
 //
 // Additional Comments:
 //   IMPORTANT - bug found in the CNN wiring prior to this revision:
@@ -32,10 +41,10 @@
 //   (CNN_LD_IMG && !image_load_ready). With these tied permanently low,
 //   the CPU would stall forever - hang - the instant it executed either
 //   CNN_LD_WT or CNN_LD_IMG. This revision replaces those ties with the
-//   real ready signals from cnn_coprocessor. Also note: `image_size`
-//   was missing entirely from the picorv32 port connection list before
-//   this revision (not just blank - absent), so it was silently left
-//   floating; it is now connected too.
+//   real ready signals from cnn_coprocessor_wrapper. Also note:
+//   `image_size` was missing entirely from the picorv32 port connection
+//   list before this revision (not just blank - absent), so it was
+//   silently left floating; it is now connected too.
 //
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -169,7 +178,7 @@ module picorv32_core #(
 	reg [31:0]mem_rdata  ;
 
 	// -----------------------------------------------------------------
-	// CNN decoder <-> cnn_coprocessor wiring (added Step 3 / 06.07.2026)
+	// CNN decoder <-> cnn_coprocessor_wrapper wiring (added Step 3 / 06.07.2026)
 	// -----------------------------------------------------------------
 	wire        cnn_image_start;
 	wire        cnn_weight_start;
@@ -293,8 +302,8 @@ module picorv32_core #(
 		.trace_data (trace_data),
 
 		// --- CNN decoder ports: previously blank / tied to 1'b0, now
-		//     wired to the real cnn_coprocessor instance below. Also
-		//     added .image_size, which was missing entirely before. ---
+		//     wired to the real cnn_coprocessor_wrapper instance below.
+		//     Also added .image_size, which was missing entirely before. ---
 		.image_start      (cnn_image_start      ),
 		.weight_start     (cnn_weight_start     ),
 		.image_base_addr  (cnn_image_base_addr  ),
@@ -308,12 +317,16 @@ module picorv32_core #(
 	);
 
 	// -----------------------------------------------------------------
-	// CNN co-processor (added Step 3 / 06.07.2026)
-	// See cnn_coprocessor.v for the full ASSUMPTIONS/OPEN ITEMS list -
-	// in particular, the shared BRAM Port B arbitration inside it has
-	// not yet been verified in simulation.
+	// CNN co-processor wrapper (revised - cnn_coprocessor was never a
+	// real module; replaced with cnn_coprocessor_wrapper.v, which
+	// instantiates the coprocessor team's own bram_arbiter /
+	// weight_loader_fsm / image_loader_fsm / window_generator /
+	// mac_parallel / store_fsm files unmodified. Unlike
+	// cnn_accelerator_wrapper.v (which owns a private BRAM for
+	// standalone testing), this wrapper has no internal BRAM - it
+	// drives the shared BRAM's Port B directly via bram_portb_*.
 	// -----------------------------------------------------------------
-	cnn_coprocessor u_cnn_coprocessor (
+	cnn_coprocessor_wrapper u_cnn_coprocessor_wrapper (
 		.clk               (clk),
 		.resetn            (resetn),
 
@@ -328,7 +341,6 @@ module picorv32_core #(
 
 		.weight_load_ready (cnn_weight_load_ready),
 		.image_load_ready  (cnn_image_load_ready),
-		.cnn_busy          (), // unused at this level - available if firmware polling needs it later
 
 		.bram_portb_addr   (bram_portb_addr),
 		.bram_portb_en     (bram_portb_en),
