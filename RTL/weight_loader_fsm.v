@@ -13,7 +13,7 @@ module weight_loader_fsm
 #(
 	parameter WT_REG_WIDTH = 64,
 	parameter NUM_KERNELS = 16,
-
+  //hello
 	// Number of bits required to represent the number of kernels.
 	parameter KERNEL_WIDTH = $clog2(NUM_KERNELS)
 ) (
