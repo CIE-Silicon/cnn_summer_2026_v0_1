@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+
 //////////////////////////////////////////////////////////////////////////////////
 // Engineer: Vishal V
 // Update Date: 07.07.2026
@@ -13,7 +14,7 @@ module weight_loader_fsm
 #(
 	parameter WT_REG_WIDTH = 64,
 	parameter NUM_KERNELS = 16,
-  //hello
+
 	// Number of bits required to represent the number of kernels.
 	parameter KERNEL_WIDTH = $clog2(NUM_KERNELS)
 ) (
@@ -24,27 +25,27 @@ module weight_loader_fsm
 	// from picoRV32
 	input  wire        weight_load_start,
 	input  wire [31:0] base_address,
-	input  wire [KERNEL_WIDTH-1:0] num_kernels,
+	input  wire [6:0]  num_kernels,
 
 	// from BRAM port B
 	input  wire        bram_weight_ready,
-	input  wire [31:0] bram_rdata,
+	input  wire [31:0] bram_weight_rdata,
 
 	// to mac_parallel
 	output reg         mac_weight_valid,
 	output reg [WT_REG_WIDTH-1:0] w0_reg, output reg [WT_REG_WIDTH-1:0] w1_reg, output reg [WT_REG_WIDTH-1:0] w2_reg,
-    	output reg [WT_REG_WIDTH-1:0] w3_reg, output reg [WT_REG_WIDTH-1:0] w4_reg, output reg [WT_REG_WIDTH-1:0] w5_reg,
-    	output reg [WT_REG_WIDTH-1:0] w6_reg, output reg [WT_REG_WIDTH-1:0] w7_reg, output reg [WT_REG_WIDTH-1:0] w8_reg,
+	output reg [WT_REG_WIDTH-1:0] w3_reg, output reg [WT_REG_WIDTH-1:0] w4_reg, output reg [WT_REG_WIDTH-1:0] w5_reg,
+	output reg [WT_REG_WIDTH-1:0] w6_reg, output reg [WT_REG_WIDTH-1:0] w7_reg, output reg [WT_REG_WIDTH-1:0] w8_reg,
 
 	// to BRAM port B
 	output reg         bram_weight_valid,
-    	output reg  [31:0] bram_raddr
+	output reg  [31:0] bram_weight_raddr
 );
 
 localparam [1:0]
 	IDLE       = 2'd0,
-        CALC_ADDR  = 2'd1,
-        CAPTURE_WT = 2'd2;
+	CALC_ADDR  = 2'd1,
+	CAPTURE_WT = 2'd2;
 
 /*
  * This localparam defines the number of rows per weight in the BRAM.
@@ -70,12 +71,13 @@ reg [1:0] state, next;
  * address for each weight.
  */
 reg [31:0] base_addr_r;
-wire [31:0] next_bram_raddr;
+wire [31:0] next_bram_weight_raddr;
 
 //-------------------//
 // internal counters //
 //-------------------//
 reg [3:0]  weight_idx_cnt;
+reg [3:0]  weight_idx_cnt_next;
 
 /*
  * This register is used to track whether a BRAM read request is pending.
@@ -95,67 +97,30 @@ always @(posedge clk)
 begin
 	if (!resetn)
 		state <= IDLE;
-        else
+	else
 		state <= next;
 end
 
-//---------------------------------//
-// Next-State Logic- Combinational //
-//---------------------------------//
-always @(*)
-begin
-	next = state;
-
-	case (state)
-        	IDLE:
-            	begin
-                	if (weight_load_start)
-                    		next = CALC_ADDR;
-            	end
-
-            	CALC_ADDR:
-	    	begin
-			if (bram_weight_ready)
-		    		next = CAPTURE_WT;
-	    	end
-
-            	CAPTURE_WT:
-            	begin
-                	if (kernel_row_cnt == 1'b1 && weight_idx_cnt == 4'd8)
-                    		next = IDLE;
-                	else
-                    		next = CALC_ADDR;
-            	end
-
-            	default:
-	    		next = IDLE;
-        endcase
-end
-
-/*
- * This combinational logic calculates the next BRAM read address based on the
- * base address, weight index, and kernel row count.
- * weight_idx_cnt shifts after every 2 changes in kernel_row_cnt, which corresponds to the 2 rows per weight.
- */
-assign next_bram_raddr = base_addr_r + (weight_idx_cnt * ROWS_PER_WT * 4) + ({27'd0, kernel_row_cnt} << 2);
-
+//----------------------------------------------//
+// Sequential Signal Assignments for each state //
+//----------------------------------------------//
 always @(posedge clk)
 begin
 	if (!resetn)
-        begin
-        	mac_weight_valid <= 1'b0;
-            	bram_raddr <= 32'd0;
-            	weight_idx_cnt <= 4'd0;
-            	kernel_row_cnt <= 1'b0;
-            	base_addr_r <= 32'd0;
-            	w0_reg <= 64'd0; w1_reg <= 64'd0; w2_reg <= 64'd0;
-            	w3_reg <= 64'd0; w4_reg <= 64'd0; w5_reg <= 64'd0;
-            	w6_reg <= 64'd0; w7_reg <= 64'd0; w8_reg <= 64'd0;
-	    	bram_weight_valid <= 1'b0;
+	begin
+		mac_weight_valid <= 1'b0;
+		bram_weight_raddr <= 32'd0;
+		weight_idx_cnt <= 4'd0;
+		kernel_row_cnt <= 1'b0;
+		base_addr_r <= 32'd0;
+		w0_reg <= 64'd0; w1_reg <= 64'd0; w2_reg <= 64'd0;
+		w3_reg <= 64'd0; w4_reg <= 64'd0; w5_reg <= 64'd0;
+		w6_reg <= 64'd0; w7_reg <= 64'd0; w8_reg <= 64'd0;
+		bram_weight_valid <= 1'b0;
 		bram_req_pending <= 1'b0;
-        end
+	end
 	else
-        begin
+	begin
 		bram_weight_valid <= 1'b0;
 
 		case (state)
@@ -176,7 +141,7 @@ begin
 			begin
 				if (!bram_req_pending)
 				begin
-					bram_raddr <= next_bram_raddr;
+					bram_weight_raddr <= next_bram_weight_raddr;
 					bram_weight_valid <= 1'b1;
 					bram_req_pending <= 1'b1;
 				end
@@ -190,31 +155,31 @@ begin
 				begin
 					case (weight_idx_cnt)
 						4'd0:
-							w0_reg[31: 0] <= bram_rdata;
+							w0_reg[31: 0] <= bram_weight_rdata;
 
 						4'd1:
-							w1_reg[31: 0] <= bram_rdata;
+							w1_reg[31: 0] <= bram_weight_rdata;
 
 						4'd2:
-							w2_reg[31: 0] <= bram_rdata;
+							w2_reg[31: 0] <= bram_weight_rdata;
 
 						4'd3:
-							w3_reg[31: 0] <= bram_rdata;
+							w3_reg[31: 0] <= bram_weight_rdata;
 
 						4'd4:
-							w4_reg[31: 0] <= bram_rdata;
+							w4_reg[31: 0] <= bram_weight_rdata;
 
 						4'd5:
-							w5_reg[31: 0] <= bram_rdata;
+							w5_reg[31: 0] <= bram_weight_rdata;
 
 						4'd6:
-							w6_reg[31: 0] <= bram_rdata;
+							w6_reg[31: 0] <= bram_weight_rdata;
 
 						4'd7:
-							w7_reg[31: 0] <= bram_rdata;
+							w7_reg[31: 0] <= bram_weight_rdata;
 
 						4'd8:
-							w8_reg[31: 0] <= bram_rdata;
+							w8_reg[31: 0] <= bram_weight_rdata;
 
 						default: ; // if other case: registers hold their state
 					endcase
@@ -223,31 +188,31 @@ begin
 				begin
 					case (weight_idx_cnt)
 						4'd0:
-							w0_reg[63:32] <= bram_rdata;
+							w0_reg[63:32] <= bram_weight_rdata;
 
 						4'd1:
-							w1_reg[63:32] <= bram_rdata;
+							w1_reg[63:32] <= bram_weight_rdata;
 
 						4'd2:
-							w2_reg[63:32] <= bram_rdata;
+							w2_reg[63:32] <= bram_weight_rdata;
 
 						4'd3:
-							w3_reg[63:32] <= bram_rdata;
+							w3_reg[63:32] <= bram_weight_rdata;
 
 						4'd4:
-							w4_reg[63:32] <= bram_rdata;
+							w4_reg[63:32] <= bram_weight_rdata;
 
 						4'd5:
-							w5_reg[63:32] <= bram_rdata;
+							w5_reg[63:32] <= bram_weight_rdata;
 
 						4'd6:
-							w6_reg[63:32] <= bram_rdata;
+							w6_reg[63:32] <= bram_weight_rdata;
 
 						4'd7:
-							w7_reg[63:32] <= bram_rdata;
+							w7_reg[63:32] <= bram_weight_rdata;
 
 						4'd8:
-							w8_reg[63:32] <= bram_rdata;
+							w8_reg[63:32] <= bram_weight_rdata;
 
 						default: ; // if other case: registers hold their state
 					endcase
@@ -268,7 +233,7 @@ begin
 						mac_weight_valid <= 1'b1;
 					end
 					else
-						weight_idx_cnt <= weight_idx_cnt + 4'd1;
+						weight_idx_cnt <= weight_idx_cnt_next;
 				end
 				else
 					kernel_row_cnt <= 1'b1;
@@ -276,7 +241,60 @@ begin
 
 			default: ; // if other case: registers hold their state
 		endcase
-    	end
+	end
 end
+
+//-------------------//
+// Weight Index Next //
+//-------------------//
+always @(*)
+begin
+	if (!resetn)
+		weight_idx_cnt_next = 4'd0;
+	else if (state == CAPTURE_WT && kernel_row_cnt == ROWS_PER_WT - 1 && weight_idx_cnt < 4'd8)
+		weight_idx_cnt_next = weight_idx_cnt + 4'd1;
+	else
+		weight_idx_cnt_next = weight_idx_cnt;
+end
+
+//---------------------------------//
+// Next-State Logic- Combinational //
+//---------------------------------//
+always @(*)
+begin
+	next = state;
+
+	case (state)
+		IDLE:
+		begin
+			if (weight_load_start)
+				next = CALC_ADDR;
+		end
+
+		CALC_ADDR:
+		begin
+			if (bram_weight_ready)
+				next = CAPTURE_WT;
+		end
+
+		CAPTURE_WT:
+		begin
+			if (kernel_row_cnt == 1'b1 && weight_idx_cnt == 4'd8)
+				next = IDLE;
+			else
+				next = CALC_ADDR;
+		end
+
+		default:
+			next = IDLE;
+	endcase
+end
+
+/*
+ * This combinational logic calculates the next BRAM read address based on the
+ * base address, weight index, and kernel row count.
+ * weight_idx_cnt shifts after every 2 changes in kernel_row_cnt, which corresponds to the 2 rows per weight.
+ */
+assign next_bram_weight_raddr = base_addr_r + (weight_idx_cnt * ROWS_PER_WT * 4) + ({27'd0, kernel_row_cnt} << 2);
 
 endmodule
