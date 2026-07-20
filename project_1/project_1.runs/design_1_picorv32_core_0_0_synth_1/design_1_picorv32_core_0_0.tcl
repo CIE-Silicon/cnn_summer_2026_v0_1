@@ -56,9 +56,15 @@ if {$::dispatch::connected} {
 }
 
 OPTRACE "design_1_picorv32_core_0_0_synth_1" START { ROLLUP_AUTO }
+set_param checkpoint.writeSynthRtdsInDcp 1
 set_param general.usePosixSpawnForFork 1
+set_param dlyest.enablePhysicalLayerCollector 0
 set_msg_config -id {Common 17-41} -limit 10000000
+set_msg_config -id {Synth 8-256} -limit 10000
+set_msg_config -id {Synth 8-638} -limit 10000
 set_msg_config  -id {IP_Flow 19-2187}  -string {{WARNING: [IP_Flow 19-2187] The Product Guide file is missing.}}  -suppress 
+set_msg_config  -id {17-179}  -suppress 
+set_msg_config  -id {17-179}  -suppress 
 set_param project.vivado.isBlockSynthRun true
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xc7a35tcsg324-1

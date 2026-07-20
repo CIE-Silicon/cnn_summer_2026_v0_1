@@ -4,7 +4,7 @@
     "xci_name": "design_1_picorv32_core_0_0",
     "cell_name": "picorv32_core_0",
     "component_reference": "user.org:user:picorv32_core:1.0",
-    "ip_revision": "95",
+    "ip_revision": "101",
     "gen_directory": "../../../../../../project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0",
     "parameters": {
       "component_parameters": {
@@ -84,7 +84,7 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Integrator" } ],
-        "IPREVISION": [ { "value": "95" } ],
+        "IPREVISION": [ { "value": "101" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../../../project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
@@ -265,5 +265,5 @@
       }
     }
   },
-  "checksum": "837550a5"
+  "checksum": "65f30995"
 }

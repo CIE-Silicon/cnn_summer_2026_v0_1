@@ -212,7 +212,7 @@
     "components": {
       "picorv32_core_0": {
         "vlnv": "user.org:user:picorv32_core:1.0",
-        "ip_revision": "95",
+        "ip_revision": "101",
         "xci_name": "design_1_picorv32_core_0_0",
         "xci_path": "ip\\design_1_picorv32_core_0_0\\design_1_picorv32_core_0_0.xci",
         "inst_hier_path": "picorv32_core_0",
