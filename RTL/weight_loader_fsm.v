@@ -145,12 +145,20 @@ begin
 					bram_weight_valid <= 1'b1;
 					bram_req_pending <= 1'b1;
 				end
+				else
+				begin
+					bram_weight_valid <= 1'b1;
+
+					if (bram_weight_ready)
+					begin
+						bram_req_pending <= 1'b0;
+						bram_weight_valid <= 1'b0;
+					end
+				end
 			end
 
 			CAPTURE_WT:
 			begin
-				bram_req_pending <= 1'b0;
-
 				if (!kernel_row_cnt)
 				begin
 					case (weight_idx_cnt)
@@ -273,7 +281,7 @@ begin
 
 		CALC_ADDR:
 		begin
-			if (bram_weight_ready)
+			if (bram_weight_ready && bram_req_pending)
 				next = CAPTURE_WT;
 		end
 

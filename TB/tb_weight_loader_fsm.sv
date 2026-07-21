@@ -96,6 +96,7 @@ end
 logic bram_weight_valid1;
 logic bram_weight_valid2;
 logic bram_weight_valid3;
+logic bram_weight_valid3_d;
 
 /*
  * BRAM ready signal is delayed by 3 cycles to account for BRAM latency.
@@ -104,13 +105,21 @@ logic bram_weight_valid3;
 always_ff @(posedge clk)
 begin
 	if(!resetn)
+	begin
+                bram_weight_valid1 <= 1'b0;
+                bram_weight_valid2 <= 1'b0;
+                bram_weight_valid3 <= 1'b0;
+                bram_weight_valid3_d <= 1'b0;
 		bram_weight_ready <= 1'b0;
+	end
 	else
 	begin
 		bram_weight_valid1 <= bram_weight_valid;
 		bram_weight_valid2 <= bram_weight_valid1;
 		bram_weight_valid3 <= bram_weight_valid2;
-		bram_weight_ready  <= bram_weight_valid3;
+		bram_weight_valid3_d <= bram_weight_valid3;
+
+                bram_weight_ready <= bram_weight_valid3 && !bram_weight_valid3_d;
 	end
 end
 
