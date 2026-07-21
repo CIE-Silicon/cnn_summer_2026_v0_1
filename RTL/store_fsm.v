@@ -23,6 +23,9 @@ module store_fsm
 	// from picoRV32
 	input  wire [31:0]  dest_base_addr,
 
+	//from BRAM IP
+	input wire 	    bram_store_ready,
+
 	// to BRAM IP
 	output reg  [31:0]  bram_store_waddr,
 	output reg  [31:0]  bram_store_wdata,
@@ -79,6 +82,14 @@ reg [255:0] next_mac_burst_buff1;
 wire [31:0]  next_bram_store_waddr;
 wire [31:0]  next_bram_store_wdata;
 
+/*
+ * This register is used to track whether a BRAM read request is pending.
+ * It is set when a read request is issued and cleared when the data is available
+ * from BRAM. This ensures that the FSM does not issue multiple read requests
+ * before the previous request has been fulfilled.
+ */
+reg bram_req_pending;
+
 always @(posedge clk)
 begin
 	if (!resetn)
@@ -104,6 +115,7 @@ begin
 		mac_burst_buff0 <= 256'd0;
 		mac_burst_buff1 <= 256'd0;
 		store_halt <= 1'b0;
+		bram_req_pending <= 1'b0;
 	end
 	else
 	begin
@@ -113,6 +125,7 @@ begin
 				bram_store_valid <= 1'b0;
 				bram_store_wen <= 1'b0;
 				store_halt <= 1'b0;
+				bram_req_pending <= 1'b0;
 
 				if (mac_valid && mac_burst_count == 2'd0)
 				begin
@@ -138,18 +151,37 @@ begin
 
 			WRITE:
 			begin
-				bram_store_valid <= 1'b1;
-				bram_store_wen   <= 1'b1;
-				bram_store_waddr <= next_bram_store_waddr;
-				bram_store_wdata <= next_bram_store_wdata;
+				if (!bram_req_pending)
+				begin
+					bram_store_valid <= 1'b1;
+					bram_store_wen   <= 1'b1;
+					bram_store_waddr <= next_bram_store_waddr;
+					bram_store_wdata <= next_bram_store_wdata;
 
-				mac_burst_buff0   <= next_mac_burst_buff0;
-				mac_burst_buff1   <= next_mac_burst_buff1;
-				channel_idx_count <= next_channel_idx_count;
-				pixel_pair_offset <= next_pixel_pair_offset;
+					bram_req_pending <= 1'b1;
+				end
+				else
+				begin
+					bram_store_valid <= 1'b1;
+					bram_store_wen   <= 1'b1;
 
-				if (channel_idx_count == 4'd15)
-					mac_burst_count <= 2'd0;
+					if (bram_store_ready)
+					begin
+						bram_store_valid <= 1'b0;
+						bram_store_wen   <= 1'b0;
+						bram_req_pending <= 1'b0;
+						mac_burst_buff0   <= next_mac_burst_buff0;
+						mac_burst_buff1   <= next_mac_burst_buff1;
+						channel_idx_count <= next_channel_idx_count;
+						pixel_pair_offset <= next_pixel_pair_offset;
+
+						if (channel_idx_count == 4'd15)
+						begin
+							mac_burst_count <= 2'd0;
+							store_halt <= 1'b0;
+						end
+					end
+				end
 			end
 
 			default:
@@ -185,7 +217,7 @@ begin
 
 		WRITE:
 		begin
-			if (channel_idx_count == 4'd15)
+			if (bram_req_pending && bram_store_ready && channel_idx_count == 4'd15)
 				next = IDLE;
 		end
 
