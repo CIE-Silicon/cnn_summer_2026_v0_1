@@ -36,22 +36,25 @@ module bram_arbiter
 	input wire [31:0] doutb,
 
 	// to weight_loader_fsm
-	output wire bram_weight_ready,
+	output reg bram_weight_ready,
 	output wire [31:0] bram_weight_rdata,
 
 	// to store_fsm
-	output wire bram_store_ready,
+	output reg bram_store_ready,
 
 	// to image_loader_fsm
-	output wire bram_image_ready,
+	output reg bram_image_ready,
 	output wire [31:0] bram_image_rdata,
 
 	// to BRAM IP
 	output reg [31:0] addrb,
-	output wire [31:0] dinb,
-	output wire [0:0] web,
-	output wire enb
+	output reg [31:0] dinb,
+	output reg [0:0] web,
+	output reg enb
 );
+
+assign bram_weight_rdata = doutb;
+assign bram_image_rdata = doutb;
 
 //--------------------------//
 // Next Cycle Ready Signals //
@@ -85,39 +88,36 @@ end
 
 always@(*)
 begin
-	if (bram_weight_valid)
+	// Default Pre-assignments to prevent latches and resolve unassigned branches
+	addrb = 32'd0;
+	enb = 1'b0;
+	web = 1'b0;
+	dinb = 32'd0;
+	next_bram_weight_ready = 1'b0;
+	next_bram_store_ready = 1'b0;
+	next_bram_image_ready = 1'b0;
+
+	if (bram_weight_valid && !bram_weight_ready)
 	begin
 		addrb = bram_weight_raddr;
-		enb = bram_weight_valid;
+		enb = 1'b1;
 		web = 1'b0; // weight_loader_fsm never writes to BRAM
-		bram_weight_rdata = doutb;
 		next_bram_weight_ready = 1'b1;
 	end
-	else if (bram_store_valid)
+	else if (bram_store_valid && !bram_store_ready)
 	begin
 		addrb = bram_store_waddr;
-		enb = bram_store_valid;
+		enb = 1'b1;
 		web = bram_store_wen;
 		dinb = bram_store_wdata;
 		next_bram_store_ready = 1'b1;
 	end
-	else if (bram_image_valid)
+	else if (bram_image_valid && !bram_image_ready)
 	begin
 		addrb = bram_image_raddr;
-		enb = bram_image_valid;
+		enb = 1'b1;
 		web = 1'b0; // image_loader_fsm never writes to BRAM'
-		doutb = bram_image_rdata;
 		next_bram_image_ready = 1'b1;
-	end
-	else
-	begin
-		addrb = 32'dz; // tri-state the address bus when no FSM is accessing the BRAM
-		enb = 1'b0;
-		web = 1'b0;
-		dinb = 32'd0;
-		next_bram_weight_ready = 1'b0;
-		next_bram_store_ready = 1'b0;
-		next_bram_image_ready = 1'b0;
 	end
 end
 

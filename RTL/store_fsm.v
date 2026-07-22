@@ -64,17 +64,13 @@ reg [1:0]  mac_burst_count;
  * and can move to the next channel.
  */
 reg [3:0]  channel_idx_count;
-reg [3:0]  next_channel_idx_count;
 reg [15:0] pixel_pair_offset;
-reg [15:0] next_pixel_pair_offset;
 
 //-------------------------------------//
 // Shift Registers to Hold MAC Results //
 //-------------------------------------//
 reg [255:0] mac_burst_buff0;
 reg [255:0] mac_burst_buff1;
-reg [255:0] next_mac_burst_buff0;
-reg [255:0] next_mac_burst_buff1;
 
 //---------------------------//
 // Next State BRAM Registers //
@@ -90,6 +86,9 @@ wire [31:0]  next_bram_store_wdata;
  */
 reg bram_req_pending;
 
+//------------------//
+// Next State Logic //
+//------------------//
 always @(posedge clk)
 begin
 	if (!resetn)
@@ -139,14 +138,6 @@ begin
 					store_halt     <= 1'b1;
 					channel_idx_count <= 4'd0;
 				end
-				else
-				begin
-					mac_burst_buff0 <= mac_burst_buff0;
-					mac_burst_buff1 <= mac_burst_buff1;
-					mac_burst_count <= mac_burst_count;
-					store_halt <= store_halt;
-					channel_idx_count <= channel_idx_count;
-				end
 			end
 
 			WRITE:
@@ -162,40 +153,26 @@ begin
 				end
 				else
 				begin
-					bram_store_valid <= 1'b1;
-					bram_store_wen   <= 1'b1;
-
-					if (bram_store_ready)
+					if (bram_store_valid && bram_store_ready)
 					begin
 						bram_store_valid <= 1'b0;
 						bram_store_wen   <= 1'b0;
 						bram_req_pending <= 1'b0;
-						mac_burst_buff0   <= next_mac_burst_buff0;
-						mac_burst_buff1   <= next_mac_burst_buff1;
-						channel_idx_count <= next_channel_idx_count;
-						pixel_pair_offset <= next_pixel_pair_offset;
+
+						mac_burst_buff0 <= mac_burst_buff0 >> 16;
+						mac_burst_buff1 <= mac_burst_buff1 >> 16;
 
 						if (channel_idx_count == 4'd15)
 						begin
+							channel_idx_count <= 4'd0;
+							pixel_pair_offset <= pixel_pair_offset + 16'd1;
 							mac_burst_count <= 2'd0;
 							store_halt <= 1'b0;
 						end
+						else
+							channel_idx_count <= channel_idx_count + 4'd1;
 					end
 				end
-			end
-
-			default:
-			begin
-				mac_burst_count <= 2'd0;
-				bram_store_valid <= 1'b0;
-				bram_store_wen <= 1'b0;
-				bram_store_waddr <= 32'd0;
-				bram_store_wdata <= 32'd0;
-				channel_idx_count <= 4'd0;
-				pixel_pair_offset <= 16'd0;
-				mac_burst_buff0 <= 256'd0;
-				mac_burst_buff1 <= 256'd0;
-				store_halt <= 1'b0;
 			end
 		endcase
 	end
@@ -217,50 +194,13 @@ begin
 
 		WRITE:
 		begin
-			if (bram_req_pending && bram_store_ready && channel_idx_count == 4'd15)
+			if (bram_store_valid && bram_store_ready && channel_idx_count == 4'd15)
 				next = IDLE;
 		end
 
 		default:
 			next = IDLE;
 	endcase
-end
-
-//-----------------------------------//
-// Next Signal Logic - Combinational //
-//-----------------------------------//
-always @(*)
-begin
-	if (!resetn)
-	begin
-		next_mac_burst_buff0   = 256'd0;
-		next_mac_burst_buff1   = 256'd0;
-		next_channel_idx_count = 4'd0;
-		next_pixel_pair_offset = 16'd0;
-	end
-	else if (state == WRITE)
-	begin
-		next_mac_burst_buff0 = mac_burst_buff0 >> 16;
-		next_mac_burst_buff1 = mac_burst_buff1 >> 16;
-
-		if (channel_idx_count == 4'd15)
-		begin
-			next_channel_idx_count = 4'd0;
-			next_pixel_pair_offset = pixel_pair_offset + 1'b1;
-		end
-		else
-		begin
-			next_channel_idx_count = channel_idx_count + 1'b1;
-			next_pixel_pair_offset = pixel_pair_offset;
-		end
-	end
-	else
-	begin
-		next_mac_burst_buff0   = mac_burst_buff0;
-		next_mac_burst_buff1   = mac_burst_buff1;
-		next_channel_idx_count = channel_idx_count;
-		next_pixel_pair_offset = pixel_pair_offset;
-	end
 end
 
 /*
