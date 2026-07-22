@@ -2,20 +2,19 @@
 
 //////////////////////////////////////////////////////////////////////////////////
 // Engineer: Pranav Lokesh
-// Update Date: 01.07.2026
+// Update Date: 07.07.2026
 // Module Name: tb_weight_loader_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-// Simple behavioural/post-synthesis testbench for weight_loader_fsm.
-// Checks that 9 x 64-bit weight registers are loaded from BRAM.
-// ROWS_PER_WT = 2.
+//	Simple behavioural/post-synthesis testbench for weight_loader_fsm.
+//	Checks that 9 x 64-bit weight registers are loaded from BRAM.
+//	Updated for Post-Synthesis Timing Simulation Robustness and new parameters.
 //////////////////////////////////////////////////////////////////////////////////
 
 module tb_weight_loader_fsm;
 
-parameter WT_REG_WIDTH = 64;
-parameter NUM_KERNELS  = 16;
-parameter KERNEL_WIDTH = $clog2(NUM_KERNELS);
+parameter NUM_MAC_UNITS = 16;
+parameter WT_REG_WIDTH  = NUM_MAC_UNITS * 4;
 
 logic clk;
 logic resetn;
@@ -31,9 +30,12 @@ logic mac_weight_valid;
 logic bram_weight_valid;
 logic [31:0] bram_weight_raddr;
 
-logic [63:0] w0_reg,w1_reg,w2_reg,w3_reg,w4_reg,w5_reg,w6_reg,w7_reg,w8_reg;
+logic [WT_REG_WIDTH-1:0] w0_reg,w1_reg,w2_reg,w3_reg,w4_reg,w5_reg,w6_reg,w7_reg,w8_reg;
 
-weight_loader_fsm dut(
+weight_loader_fsm #(
+        .NUM_MAC_UNITS(NUM_MAC_UNITS),
+        .WT_REG_WIDTH(WT_REG_WIDTH)
+) dut (
         .clk(clk),
         .resetn(resetn),
 
@@ -60,37 +62,37 @@ weight_loader_fsm dut(
         .bram_weight_raddr(bram_weight_raddr)
 );
 
-//-------------------------------------------------//
-// Simple BRAM model for post-synthesis simulation //
-//-------------------------------------------------//
+//---------------------------------------------------------
+// Simple BRAM model for post-synthesis simulation
+//---------------------------------------------------------
 
 logic [31:0] bram_array [0:255];
 
 initial begin
-	bram_array[0]  = 32'h00000001;
-	bram_array[1]  = 32'h00000000;
-	bram_array[2]  = 32'h00000002;
-	bram_array[3]  = 32'h00000000;
-	bram_array[4]  = 32'h00000003;
-	bram_array[5]  = 32'h00000000;
-	bram_array[6]  = 32'h00000004;
-	bram_array[7]  = 32'h00000000;
-	bram_array[8]  = 32'h00000005;
-	bram_array[9]  = 32'h00000000;
-	bram_array[10] = 32'h00000006;
-	bram_array[11] = 32'h00000000;
-	bram_array[12] = 32'h00000007;
-	bram_array[13] = 32'h00000000;
-	bram_array[14] = 32'h00000008;
-	bram_array[15] = 32'h00000000;
-	bram_array[16] = 32'h00000009;
-	bram_array[17] = 32'h00000000;
+        bram_array[0]  = 32'h00000001;
+        bram_array[1]  = 32'h00000000;
+        bram_array[2]  = 32'h00000002;
+        bram_array[3]  = 32'h00000000;
+        bram_array[4]  = 32'h00000003;
+        bram_array[5]  = 32'h00000000;
+        bram_array[6]  = 32'h00000004;
+        bram_array[7]  = 32'h00000000;
+        bram_array[8]  = 32'h00000005;
+        bram_array[9]  = 32'h00000000;
+        bram_array[10] = 32'h00000006;
+        bram_array[11] = 32'h00000000;
+        bram_array[12] = 32'h00000007;
+        bram_array[13] = 32'h00000000;
+        bram_array[14] = 32'h00000008;
+        bram_array[15] = 32'h00000000;
+        bram_array[16] = 32'h00000009;
+        bram_array[17] = 32'h00000000;
 end
 
 always_ff @(posedge clk)
 begin
-	if (bram_weight_valid)
-		bram_weight_rdata <= bram_array[bram_weight_raddr >> 2];
+        if (bram_weight_valid)
+                bram_weight_rdata <= #2 bram_array[bram_weight_raddr >> 2];
 end
 
 logic bram_weight_valid1;
@@ -99,42 +101,44 @@ logic bram_weight_valid3;
 logic bram_weight_valid3_d;
 
 /*
- * BRAM ready signal is delayed by 3 cycles to account for BRAM latency.
- * This is done to simulate that the FSM works regardless of BRAM latency.
- */
+        * BRAM ready signal is delayed by 3 cycles to account for BRAM latency.
+        * Driven with #2 transport delay to prevent $setuphold violations.
+        */
 always_ff @(posedge clk)
 begin
-	if(!resetn)
-	begin
-                bram_weight_valid1 <= 1'b0;
-                bram_weight_valid2 <= 1'b0;
-                bram_weight_valid3 <= 1'b0;
-                bram_weight_valid3_d <= 1'b0;
-		bram_weight_ready <= 1'b0;
-	end
-	else
-	begin
-		bram_weight_valid1 <= bram_weight_valid;
-		bram_weight_valid2 <= bram_weight_valid1;
-		bram_weight_valid3 <= bram_weight_valid2;
-		bram_weight_valid3_d <= bram_weight_valid3;
+        if(!resetn)
+        begin
+                bram_weight_valid1 <= #2 1'b0;
+                bram_weight_valid2 <= #2 1'b0;
+                bram_weight_valid3 <= #2 1'b0;
+                bram_weight_valid3_d <= #2 1'b0;
+                bram_weight_ready <= #2 1'b0;
+        end
+        else
+        begin
+                bram_weight_valid1 <= #2 bram_weight_valid;
+                bram_weight_valid2 <= #2 bram_weight_valid1;
+                bram_weight_valid3 <= #2 bram_weight_valid2;
+                bram_weight_valid3_d <= #2 bram_weight_valid3;
 
-                bram_weight_ready <= bram_weight_valid3 && !bram_weight_valid3_d;
-	end
+                bram_weight_ready <= #2 (bram_weight_valid3 && !bram_weight_valid3_d);
+        end
 end
 
 always #5 clk = ~clk;
 
-// Wait for weight loading to complete.
+// Wait for weight loading to complete using safe post-synth sampling
 task wait_done;
 begin
-        while(!mac_weight_valid)
+        while(1) begin
                 @(posedge clk);
+                #8;
+                if (mac_weight_valid === 1'b1) break;
+        end
 
         $display("[%0t] Weight loading completed.", $time);
 end
 endtask
-
 
 task print_weights;
 begin
@@ -152,7 +156,6 @@ begin
 end
 endtask
 
-
 task check_weight(
         input [63:0] actual,
         input [63:0] expected,
@@ -162,25 +165,24 @@ begin
         if(actual!==expected)
         begin
                 $error("Weight %0d mismatch. Expected=%h Actual=%h",
-                idx, expected, actual);
+                        idx, expected, actual);
         end
         else
                 $display("Weight %0d PASS",idx);
 end
 endtask
 
-
 task run_test(input [31:0] base);
 begin
         @(posedge clk);
-        #1;
+        #2;
 
         base_address      = base;
         num_kernels       = 9;
         weight_load_start = 1;
 
         @(posedge clk);
-        #1;
+        #2;
 
         weight_load_start = 0;
 
@@ -202,7 +204,6 @@ endtask
 
 initial
 begin
-
         clk = 0;
         resetn = 0;
 

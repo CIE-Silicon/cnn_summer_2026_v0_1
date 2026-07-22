@@ -12,11 +12,8 @@
 
 module weight_loader_fsm
 #(
-	parameter WT_REG_WIDTH = 64,
-	parameter NUM_KERNELS = 16,
-
-	// Number of bits required to represent the number of kernels.
-	parameter KERNEL_WIDTH = $clog2(NUM_KERNELS)
+	parameter NUM_MAC_UNITS = 16,
+	parameter WT_REG_WIDTH = NUM_MAC_UNITS * 4
 ) (
 	// from external
 	input  wire        clk,
@@ -51,14 +48,14 @@ localparam [1:0]
  * This localparam defines the number of rows per weight in the BRAM.
  * Each weight consists of 2 rows (32 bits each), so ROWS_PER_WT is set to 2.
  */
-localparam [4:0] ROWS_PER_WT = WT_REG_WIDTH / 32;
+localparam [4:0] ROWS_PER_WT = NUM_MAC_UNITS / 8;
 
 /*
  * This localparam calculates the number of bits required to represent the number of rows per weight.
  * It uses the $clog2 function to determine the minimum number of bits needed to represent ROWS_PER_WT.
  * Which in this case is 1 bit since ROWS_PER_WT is 2 (2 rows per weight).
  */
-localparam [2:0] KERNEL_ROW_CNT = $clog2(ROWS_PER_WT);
+localparam [2:0] KERNEL_CNT_BITS = $clog2(ROWS_PER_WT);
 
 //-----------------//
 // State Registers //
@@ -91,7 +88,8 @@ reg bram_req_pending;
  * This register counts the number of rows per weight that have been captured.
  * It is used to determine when to move to the next weight index.
  */
-reg [KERNEL_ROW_CNT-1:0] kernel_row_cnt;
+reg [KERNEL_CNT_BITS-1:0] kernel_row_cnt;
+reg [KERNEL_CNT_BITS-1:0] kernel_row_cnt_next;
 
 always @(posedge clk)
 begin
@@ -113,9 +111,9 @@ begin
 		weight_idx_cnt <= 4'd0;
 		kernel_row_cnt <= 1'b0;
 		base_addr_r <= 32'd0;
-		w0_reg <= 64'd0; w1_reg <= 64'd0; w2_reg <= 64'd0;
-		w3_reg <= 64'd0; w4_reg <= 64'd0; w5_reg <= 64'd0;
-		w6_reg <= 64'd0; w7_reg <= 64'd0; w8_reg <= 64'd0;
+		w0_reg <= {WT_REG_WIDTH{1'b0}}; w1_reg <= {WT_REG_WIDTH{1'b0}}; w2_reg <= {WT_REG_WIDTH{1'b0}};
+		w3_reg <= {WT_REG_WIDTH{1'b0}}; w4_reg <= {WT_REG_WIDTH{1'b0}}; w5_reg <= {WT_REG_WIDTH{1'b0}};
+		w6_reg <= {WT_REG_WIDTH{1'b0}}; w7_reg <= {WT_REG_WIDTH{1'b0}}; w8_reg <= {WT_REG_WIDTH{1'b0}};
 		bram_weight_valid <= 1'b0;
 		bram_req_pending <= 1'b0;
 	end
@@ -127,7 +125,7 @@ begin
 			IDLE:
 			begin
 				weight_idx_cnt <= 4'd0;
-				kernel_row_cnt <= 1'b0;
+				kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
 				bram_req_pending <= 1'b0;
 
 				if (weight_load_start)
@@ -159,76 +157,40 @@ begin
 
 			CAPTURE_WT:
 			begin
-				if (!kernel_row_cnt)
+				case (weight_idx_cnt)
+					4'd0:
+						w0_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd1:
+						w1_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd2:
+						w2_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd3:
+						w3_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd4:
+						w4_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd5:
+						w5_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd6:
+						w6_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd7:
+						w7_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					4'd8:
+						w8_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+
+					default: ; // if other case: registers hold their state
+				endcase
+
+				if (kernel_row_cnt == (ROWS_PER_WT - 1))
 				begin
-					case (weight_idx_cnt)
-						4'd0:
-							w0_reg[31: 0] <= bram_weight_rdata;
-
-						4'd1:
-							w1_reg[31: 0] <= bram_weight_rdata;
-
-						4'd2:
-							w2_reg[31: 0] <= bram_weight_rdata;
-
-						4'd3:
-							w3_reg[31: 0] <= bram_weight_rdata;
-
-						4'd4:
-							w4_reg[31: 0] <= bram_weight_rdata;
-
-						4'd5:
-							w5_reg[31: 0] <= bram_weight_rdata;
-
-						4'd6:
-							w6_reg[31: 0] <= bram_weight_rdata;
-
-						4'd7:
-							w7_reg[31: 0] <= bram_weight_rdata;
-
-						4'd8:
-							w8_reg[31: 0] <= bram_weight_rdata;
-
-						default: ; // if other case: registers hold their state
-					endcase
-				end
-				else
-				begin
-					case (weight_idx_cnt)
-						4'd0:
-							w0_reg[63:32] <= bram_weight_rdata;
-
-						4'd1:
-							w1_reg[63:32] <= bram_weight_rdata;
-
-						4'd2:
-							w2_reg[63:32] <= bram_weight_rdata;
-
-						4'd3:
-							w3_reg[63:32] <= bram_weight_rdata;
-
-						4'd4:
-							w4_reg[63:32] <= bram_weight_rdata;
-
-						4'd5:
-							w5_reg[63:32] <= bram_weight_rdata;
-
-						4'd6:
-							w6_reg[63:32] <= bram_weight_rdata;
-
-						4'd7:
-							w7_reg[63:32] <= bram_weight_rdata;
-
-						4'd8:
-							w8_reg[63:32] <= bram_weight_rdata;
-
-						default: ; // if other case: registers hold their state
-					endcase
-				end
-
-				if (kernel_row_cnt == ROWS_PER_WT - 1)
-				begin
-					kernel_row_cnt <= 1'b0;
+					kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
 
 					if (weight_idx_cnt == 4'd8)
 					begin
@@ -244,10 +206,22 @@ begin
 						weight_idx_cnt <= weight_idx_cnt_next;
 				end
 				else
-					kernel_row_cnt <= 1'b1;
+					kernel_row_cnt <= kernel_row_cnt_next;
 			end
 
-			default: ; // if other case: registers hold their state
+			default:
+			begin
+				// Return all registers to their reset condition
+				mac_weight_valid <= 1'b0;
+				bram_weight_raddr <= 32'd0;
+				weight_idx_cnt <= 4'd0;
+				kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
+				base_addr_r <= 32'd0;
+				w0_reg <= {WT_REG_WIDTH{1'b0}}; w1_reg <= {WT_REG_WIDTH{1'b0}}; w2_reg <= {WT_REG_WIDTH{1'b0}};
+				w3_reg <= {WT_REG_WIDTH{1'b0}}; w4_reg <= {WT_REG_WIDTH{1'b0}}; w5_reg <= {WT_REG_WIDTH{1'b0}};
+				w6_reg <= {WT_REG_WIDTH{1'b0}}; w7_reg <= {WT_REG_WIDTH{1'b0}}; w8_reg <= {WT_REG_WIDTH{1'b0}};
+				bram_req_pending <= 1'b0;
+			end
 		endcase
 	end
 end
@@ -258,11 +232,25 @@ end
 always @(*)
 begin
 	if (!resetn)
+	begin
 		weight_idx_cnt_next = 4'd0;
-	else if (state == CAPTURE_WT && kernel_row_cnt == ROWS_PER_WT - 1 && weight_idx_cnt < 4'd8)
-		weight_idx_cnt_next = weight_idx_cnt + 4'd1;
-	else
+		kernel_row_cnt_next = {KERNEL_CNT_BITS{1'b0}};
+	end
+	else if (state == CAPTURE_WT && kernel_row_cnt < (ROWS_PER_WT - 1))
+	begin
 		weight_idx_cnt_next = weight_idx_cnt;
+		kernel_row_cnt_next = kernel_row_cnt + 1'b1;
+	end
+	else if (state == CAPTURE_WT && kernel_row_cnt == (ROWS_PER_WT - 1) && weight_idx_cnt < 4'd8)
+	begin
+		weight_idx_cnt_next = weight_idx_cnt + 4'd1;
+		kernel_row_cnt_next = {KERNEL_CNT_BITS{1'b0}}; // Resets Row Count moving to next row
+	end
+	else
+	begin
+		weight_idx_cnt_next = weight_idx_cnt;
+		kernel_row_cnt_next = kernel_row_cnt;
+	end
 end
 
 //---------------------------------//
@@ -287,7 +275,7 @@ begin
 
 		CAPTURE_WT:
 		begin
-			if (kernel_row_cnt == 1'b1 && weight_idx_cnt == 4'd8)
+			if (kernel_row_cnt == (ROWS_PER_WT - 1) && weight_idx_cnt == 4'd8)
 				next = IDLE;
 			else
 				next = CALC_ADDR;
