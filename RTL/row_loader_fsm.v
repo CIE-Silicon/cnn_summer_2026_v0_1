@@ -8,8 +8,11 @@
 // Innermost FSM. Knows nothing about channels, rows_per_channel, or conv
 // timing -- given a pulse on load_row it either streams words_per_row words
 // out of BRAM starting at row_base_addr into row_data, or, if is_pad_row is
-// set, just clears row_data for a zero-padding row. Pulses row_load_done for
-// exactly one cycle once row_data is valid.
+// set, just clears row_data for a zero-padding row (handled right there in
+// IDLE -- a pad row needs no BRAM access, so there's no reason to burn a
+// separate state on it, same reasoning as why loop_ctrl_fsm's LOAD_ROW
+// doesn't have a wasted kick cycle). Pulses row_load_done for exactly one
+// cycle once row_data is valid.
 // BRAM access is request/ready (bram_valid / bram_ready) rather than an
 // assumed fixed latency, the same handshake weight_loader_fsm uses for
 // bram_arbiter -- if the BRAM IP's latency ever changes, only bram_arbiter
@@ -37,7 +40,7 @@ module row_loader_fsm
 	input  wire [WORD_WIDTH-1:0]     bram_rdata,
 	// to bram_arbiter
 	output reg                       bram_valid,      // requesting a read at bram_addr
-	output wire [31:0]               bram_addr,
+	output reg  [31:0]               bram_addr,       // registered: seeded at row_base_addr, stepped +4 per word
 	// to loop_ctrl_fsm
 	output reg  [ROW_DATA_WIDTH-1:0] row_data,
 	output reg                       row_load_done,   // 1-cycle pulse: row_data is valid
@@ -47,13 +50,11 @@ module row_loader_fsm
 //-----------------------------//
 // parameters for FSM states   //
 //-----------------------------//
-localparam [1:0]
-	IDLE    = 2'd0,
-	PAD     = 2'd1,
-	REQ     = 2'd2,
-	CAPTURE = 2'd3;
+localparam [0:0]
+	IDLE = 1'd0,
+	REQ  = 1'd1;
 
-reg [1:0] state, next;
+reg state, next;
 
 //-------------------------------//
 // Intermediate internal signals //
@@ -66,10 +67,9 @@ wire [3:0] words_per_row;
 wire [3:0] last_word;
 
 /*
- * Index of the word currently being requested/captured within this row.
- * bram_addr is row_base_addr + word_count*4 -- row_base_addr is used
- * directly (not latched into a local register), since loop_ctrl_fsm holds
- * it stable for the entire row transfer.
+ * Index of the word currently being requested/captured within this row --
+ * tracked alongside bram_addr purely for the last_word comparison, since
+ * bram_addr itself is no longer derived from it.
  */
 reg [3:0] word_count;
 
@@ -79,17 +79,6 @@ reg [3:0] word_count;
  * apart from "already asked, still waiting."
  */
 reg bram_req_pending;
-
-/*
- * loop_ctrl_fsm holds load_row/is_pad_row high for the whole time it's in
- * LOAD_ROW -- multiple cycles for a real row, but only 1 for a pad row.
- * This FSM returns to IDLE one cycle before loop_ctrl_fsm reacts to
- * row_load_done and drops load_row, so IDLE must only fire on the rising
- * edge of load_row, not just load_row being high -- otherwise it re-fires
- * on the still-asserted signal using whatever is_pad_row happens to read at
- * that instant, spuriously restarting a transfer with stale padding info.
- */
-reg load_row_d;
 
 //-----------------//
 // State Register  //
@@ -110,17 +99,16 @@ begin
 	if (!resetn)
 	begin
 		word_count       <= 4'd0;
+		bram_addr        <= 32'd0;
 		row_data         <= {ROW_DATA_WIDTH{1'b0}};
 		row_load_done    <= 1'b0;
 		image_en         <= 1'b0;
 		bram_valid       <= 1'b0;
 		bram_req_pending <= 1'b0;
-		load_row_d       <= 1'b0;
 	end
 	else
 	begin
 		row_load_done <= 1'b0;
-		load_row_d    <= load_row;
 
 		if (next == REQ)
 			image_en <= 1'b1;
@@ -132,12 +120,17 @@ begin
 			begin
 				word_count       <= 4'd0;
 				bram_req_pending <= 1'b0;
-			end
-
-			PAD:
-			begin
-				row_data      <= {ROW_DATA_WIDTH{1'b0}};
-				row_load_done <= 1'b1;
+				// load_row is a clean 1-cycle pulse from loop_ctrl_fsm --
+				// plain level check is safe, no edge detection needed here.
+				// Pad rows need no BRAM access, so handle them right here
+				// instead of burning a separate state for a single-cycle clear.
+				if (load_row && is_pad_row)
+				begin
+					row_data      <= {ROW_DATA_WIDTH{1'b0}};
+					row_load_done <= 1'b1;
+				end
+				else if (load_row && !is_pad_row)
+					bram_addr <= row_base_addr;   // seed word 0's address, entering REQ next cycle
 			end
 
 			REQ:
@@ -147,29 +140,32 @@ begin
 					bram_valid       <= 1'b0;
 					bram_req_pending <= 1'b0;
 				end
-				else if (!bram_req_pending)
-				begin
-					bram_valid       <= 1'b1;
-					bram_req_pending <= 1'b1;
-				end
 				else
 				begin
-					bram_valid <= 1'b1;
-					if (bram_ready)
+					if (!bram_req_pending)
 					begin
-						bram_req_pending <= 1'b0;
-						bram_valid       <= 1'b0;
+						bram_valid       <= 1'b1;
+						bram_req_pending <= 1'b1;
+					end
+					else
+					begin
+						bram_valid <= 1'b1;
+						if (bram_ready)
+						begin
+							
+							row_data[word_count*WORD_WIDTH +: WORD_WIDTH] <= bram_rdata;
+							bram_req_pending <= 1'b0;
+							bram_valid       <= 1'b0;
+							if (word_count == last_word)
+								row_load_done <= 1'b1;
+							else
+							begin
+								word_count <= word_count + 4'd1;
+								bram_addr  <= bram_addr + 32'd4;   
+							end
+						end
 					end
 				end
-
-			CAPTURE:
-			begin
-				row_data[word_count*WORD_WIDTH +: WORD_WIDTH] <= bram_rdata;
-				if (word_count == last_word)
-					row_load_done <= 1'b1;
-				else
-					word_count <= word_count + 4'd1;
-			end
 
 			default: ; // if other case: registers hold their state
 		endcase
@@ -184,22 +180,14 @@ begin
 	next = state;
 	case (state)
 		IDLE:
-			// rising edge only -- see load_row_d comment above
-			if (load_row && !load_row_d)
-				next = is_pad_row ? PAD : REQ;
-
-		PAD:
-			next = IDLE; // row_data cleared, done pulses this cycle
+			
+			if (load_row && !is_pad_row)
+				next = REQ;
 
 		REQ:
+			
 			if (!store_halt && bram_ready && bram_req_pending)
-				next = CAPTURE;
-
-		CAPTURE:
-			if (word_count == last_word)
-				next = IDLE; // row_data has all its words
-			else
-				next = REQ;
+				next = (word_count == last_word) ? IDLE : REQ;
 
 		default:
 			next = IDLE;
@@ -211,12 +199,5 @@ end
 //-------------------------//
 assign words_per_row = image_size[5:2];
 assign last_word     = words_per_row - 4'd1;
-
-/*
- * Read address for the word currently being requested/captured --
- * row_base_addr is loop_ctrl_fsm's cur_row_addr passed straight through,
- * word_count steps it one word at a time within the row.
- */
-assign bram_addr = row_base_addr + ({28'd0, word_count} << 2);
 
 endmodule

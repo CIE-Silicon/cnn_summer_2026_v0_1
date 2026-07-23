@@ -2829,22 +2829,6 @@ endmodule
 //      one cycle after first detection so base addresses are stable.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Engineer      : Anagha Saraswathy
-// Last Modified : 01.07.2026
-// Module Name   : picorv32_pcpi_cnn
-// Project Name  : Silicon SoC kNN
-// Description   :
-//      Decodes CNN_LD_WT (funct3=000) and CNN_LD_IMG (funct3=001)
-//      via PicoRV32 PCPI bus.
-//      wt_stall_active / img_stall_active are needed because pcpi_valid
-//      is a LEVEL signal (stays high every cycle during stall). Without
-//      them, Block 3 would re-fire every stall cycle. These latches ensure
-//      start pulses fire exactly once and addresses are latched once.
-//      Address latching uses a 2-stage pipeline (wt_latch_pending /
-//      img_latch_pending) so pcpi_rs1/rs2 are guaranteed stable when
-//      captured (they settle one cycle after pcpi_valid goes high).
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module picorv32_pcpi_cnn
 (

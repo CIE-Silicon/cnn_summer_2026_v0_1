@@ -42,7 +42,10 @@ module loop_ctrl_fsm
 	output wire                      channel_start,
 	output wire                      advance_channel,
 	// to row_loader_fsm
-	output wire                      load_row,
+	output reg                       load_row,        // 1-cycle pulse: registered, armed by whichever
+	                                                   // state transitions into LOAD_ROW, cleared the
+	                                                   // very next cycle -- row_loader_fsm can level-check
+	                                                   // it with no edge-detection of its own needed
 	output wire                      is_pad_row,
 	output wire [31:0]               row_base_addr,
 	// to conv engine
@@ -122,17 +125,18 @@ begin
 	begin
 		buffer_valid <= 1'b0;
 		done         <= 1'b0;
+		load_row     <= 1'b0;   
+		                        
 
 		case (state)
-			IDLE: ; // waiting for start -- channel_addr_fsm isn't ready to read yet
+			IDLE: ; 
 
 			CHANNEL_SETUP:
-				// channel_start / advance_channel fired last cycle;
-				// channel_base_addr / all_channels_done are valid now
 				if (!all_channels_done)
 				begin
 					cur_row_addr <= channel_base_addr;
 					row_number   <= 8'd0;
+					load_row     <= 1'b1;   
 				end
 
 			COPY_ROW:
@@ -149,6 +153,9 @@ begin
 
 				if (row_number != 8'd2 && !is_zero_row)
 					cur_row_addr <= cur_row_addr + row_stride;
+
+				if (row_number != 8'd2)
+					load_row <= 1'b1;
 			end
 
 			WAIT_FOR_CONV:
@@ -159,6 +166,9 @@ begin
 					buffer_valid <= 1'b0;
 					if (!is_zero_row)
 						cur_row_addr <= cur_row_addr + row_stride;
+					
+					if (row_number != rows_per_channel)
+						load_row <= 1'b1;
 				end
 			end
 
@@ -195,9 +205,11 @@ begin
 
 		LOAD_ROW:
 			if (row_load_done)
-			    next = (row_number < 8'd3) ? COPY_ROW : SHIFT_ROWS;
+				next = (row_number < 8'd3) ? COPY_ROW : SHIFT_ROWS;
 
 		COPY_ROW:
+			// rows 0 and 1 don't need conv yet -- go straight to the next row.
+			// row 2 completes the initial 3-line window, so conv can finally run.
 			next = (row_number == 8'd2) ? WAIT_FOR_CONV : LOAD_ROW;
 
 		WAIT_FOR_CONV:
@@ -208,6 +220,7 @@ begin
 			next = WAIT_FOR_CONV;
 
 		FINISH:
+			// hold here until the last write-back releases the bus
 			next = store_halt ? FINISH : IDLE;
 
 		default:
@@ -232,7 +245,6 @@ assign is_zero_row = (row_number == 8'd0) || (row_number == rows_per_channel - 8
  */
 assign channel_start   = (state == IDLE) && start;
 assign advance_channel = (state == WAIT_FOR_CONV) && conv_exe_done && (row_number == rows_per_channel);
-assign load_row         = (state == LOAD_ROW);
 assign is_pad_row       = is_zero_row;
 assign row_base_addr    = cur_row_addr;
 
