@@ -6,221 +6,316 @@
 // Module Name: tb_weight_loader_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-//	Simple behavioural/post-synthesis testbench for weight_loader_fsm.
-//	Checks that 9 x 64-bit weight registers are loaded from BRAM.
-//	Updated for Post-Synthesis Timing Simulation Robustness and new parameters.
+// Verifies 9 x 64-bit weight registers are loaded properly.
+// Injects mid-operation resets and variable base addresses to test edge cases.
+// Tests different base addresses and verifies correct weight loading from BRAM.
 //////////////////////////////////////////////////////////////////////////////////
 
 module tb_weight_loader_fsm;
 
-parameter NUM_MAC_UNITS = 16;
-parameter WT_REG_WIDTH  = NUM_MAC_UNITS * 4;
+parameter NUM_MAC_UNITS	= 16;
+parameter WT_REG_WIDTH	= NUM_MAC_UNITS * 4;
 
-logic clk;
-logic resetn;
+logic				clk;
+logic				resetn;
 
-logic weight_load_start;
-logic [31:0] base_address;
-logic [6:0] num_kernels;
+logic				weight_load_start;
+logic	[31:0]			base_address;
+logic	[6:0]			num_kernels;
 
-logic bram_weight_ready;
-logic [31:0] bram_weight_rdata;
+logic				bram_weight_ready;
+logic	[31:0]			bram_weight_rdata;
 
-logic mac_weight_valid;
-logic bram_weight_valid;
-logic [31:0] bram_weight_raddr;
+logic				mac_weight_valid;
+logic				bram_weight_valid;
+logic	[31:0]			bram_weight_raddr;
 
-logic [WT_REG_WIDTH-1:0] w0_reg,w1_reg,w2_reg,w3_reg,w4_reg,w5_reg,w6_reg,w7_reg,w8_reg;
+logic	[WT_REG_WIDTH-1:0]	w0_reg, w1_reg, w2_reg, w3_reg, w4_reg, w5_reg, w6_reg, w7_reg, w8_reg;
 
+int				errors;
+int				tests_run;
+int				cycle_count;
+
+//------------------//
+// DUT Instantiation//
+//------------------//
 weight_loader_fsm #(
-        .NUM_MAC_UNITS(NUM_MAC_UNITS),
-        .WT_REG_WIDTH(WT_REG_WIDTH)
+	.NUM_MAC_UNITS		(NUM_MAC_UNITS),
+	.WT_REG_WIDTH		(WT_REG_WIDTH)
 ) dut (
-        .clk(clk),
-        .resetn(resetn),
-
-        .weight_load_start(weight_load_start),
-        .base_address(base_address),
-        .num_kernels(num_kernels),
-
-        .bram_weight_ready(bram_weight_ready),
-        .bram_weight_rdata(bram_weight_rdata),
-
-        .mac_weight_valid(mac_weight_valid),
-
-        .w0_reg(w0_reg),
-        .w1_reg(w1_reg),
-        .w2_reg(w2_reg),
-        .w3_reg(w3_reg),
-        .w4_reg(w4_reg),
-        .w5_reg(w5_reg),
-        .w6_reg(w6_reg),
-        .w7_reg(w7_reg),
-        .w8_reg(w8_reg),
-
-        .bram_weight_valid(bram_weight_valid),
-        .bram_weight_raddr(bram_weight_raddr)
+	.clk			(clk),
+	.resetn			(resetn),
+	.weight_load_start	(weight_load_start),
+	.base_address		(base_address),
+	.num_kernels		(num_kernels),
+	.bram_weight_ready	(bram_weight_ready),
+	.bram_weight_rdata	(bram_weight_rdata),
+	.mac_weight_valid	(mac_weight_valid),
+	.w0_reg			(w0_reg),
+	.w1_reg			(w1_reg),
+	.w2_reg			(w2_reg),
+	.w3_reg			(w3_reg),
+	.w4_reg			(w4_reg),
+	.w5_reg			(w5_reg),
+	.w6_reg			(w6_reg),
+	.w7_reg			(w7_reg),
+	.w8_reg			(w8_reg),
+	.bram_weight_valid	(bram_weight_valid),
+	.bram_weight_raddr	(bram_weight_raddr)
 );
 
 //---------------------------------------------------------
-// Simple BRAM model for post-synthesis simulation
+// Preserved BRAM model for post-synthesis simulation
 //---------------------------------------------------------
-
-logic [31:0] bram_array [0:255];
-
-initial begin
-        bram_array[0]  = 32'h00000001;
-        bram_array[1]  = 32'h00000000;
-        bram_array[2]  = 32'h00000002;
-        bram_array[3]  = 32'h00000000;
-        bram_array[4]  = 32'h00000003;
-        bram_array[5]  = 32'h00000000;
-        bram_array[6]  = 32'h00000004;
-        bram_array[7]  = 32'h00000000;
-        bram_array[8]  = 32'h00000005;
-        bram_array[9]  = 32'h00000000;
-        bram_array[10] = 32'h00000006;
-        bram_array[11] = 32'h00000000;
-        bram_array[12] = 32'h00000007;
-        bram_array[13] = 32'h00000000;
-        bram_array[14] = 32'h00000008;
-        bram_array[15] = 32'h00000000;
-        bram_array[16] = 32'h00000009;
-        bram_array[17] = 32'h00000000;
-end
+logic	[31:0]			bram_array [0:255];
 
 always_ff @(posedge clk)
 begin
-        if (bram_weight_valid)
-                bram_weight_rdata <= #2 bram_array[bram_weight_raddr >> 2];
+	if (bram_weight_valid)
+		bram_weight_rdata <= #2 bram_array[bram_weight_raddr >> 2];
 end
 
-logic bram_weight_valid1;
-logic bram_weight_valid2;
-logic bram_weight_valid3;
-logic bram_weight_valid3_d;
+logic	bram_weight_valid1;
+logic	bram_weight_valid2;
+logic	bram_weight_valid3;
+logic	bram_weight_valid3_d;
 
 /*
-        * BRAM ready signal is delayed by 3 cycles to account for BRAM latency.
-        * Driven with #2 transport delay to prevent $setuphold violations.
-        */
+ * BRAM ready signal is delayed by 3 cycles to account for BRAM latency.
+ * Driven with #2 transport delay to prevent $setuphold violations.
+ */
 always_ff @(posedge clk)
 begin
-        if(!resetn)
-        begin
-                bram_weight_valid1 <= #2 1'b0;
-                bram_weight_valid2 <= #2 1'b0;
-                bram_weight_valid3 <= #2 1'b0;
-                bram_weight_valid3_d <= #2 1'b0;
-                bram_weight_ready <= #2 1'b0;
-        end
-        else
-        begin
-                bram_weight_valid1 <= #2 bram_weight_valid;
-                bram_weight_valid2 <= #2 bram_weight_valid1;
-                bram_weight_valid3 <= #2 bram_weight_valid2;
-                bram_weight_valid3_d <= #2 bram_weight_valid3;
+	if(!resetn)
+	begin
+		bram_weight_valid1	<= #2 1'b0;
+		bram_weight_valid2	<= #2 1'b0;
+		bram_weight_valid3	<= #2 1'b0;
+		bram_weight_valid3_d	<= #2 1'b0;
+		bram_weight_ready	<= #2 1'b0;
+	end
+	else
+	begin
+		bram_weight_valid1	<= #2 bram_weight_valid;
+		bram_weight_valid2	<= #2 bram_weight_valid1;
+		bram_weight_valid3	<= #2 bram_weight_valid2;
+		bram_weight_valid3_d	<= #2 bram_weight_valid3;
 
-                bram_weight_ready <= #2 (bram_weight_valid3 && !bram_weight_valid3_d);
-        end
+		bram_weight_ready	<= #2 (bram_weight_valid3 && !bram_weight_valid3_d);
+	end
 end
 
-always #5 clk = ~clk;
-
-// Wait for weight loading to complete using safe post-synth sampling
-task wait_done;
-begin
-        while(1) begin
-                @(posedge clk);
-                #8;
-                if (mac_weight_valid === 1'b1) break;
-        end
-
-        $display("[%0t] Weight loading completed.", $time);
+//----------------//
+// Clock & Counter//
+//----------------//
+initial begin
+	clk = 1'b0;
+	forever #5 clk = ~clk;
 end
-endtask
 
-task print_weights;
-begin
-        $display("-----------------------------");
-        $display("w0 = %h",w0_reg);
-        $display("w1 = %h",w1_reg);
-        $display("w2 = %h",w2_reg);
-        $display("w3 = %h",w3_reg);
-        $display("w4 = %h",w4_reg);
-        $display("w5 = %h",w5_reg);
-        $display("w6 = %h",w6_reg);
-        $display("w7 = %h",w7_reg);
-        $display("w8 = %h",w8_reg);
-        $display("-----------------------------");
+always_ff @(posedge clk or negedge resetn) begin
+	if (!resetn)
+		cycle_count <= 0;
+	else
+		cycle_count <= cycle_count + 1;
 end
-endtask
 
-task check_weight(
-        input [63:0] actual,
-        input [63:0] expected,
-        input integer idx
+//-----------------//
+// Helper Tasks    //
+//-----------------//
+task automatic prep_bram(
+	input logic [31:0]	base_addr,
+	input logic [31:0]	start_val
 );
 begin
-        if(actual!==expected)
-        begin
-                $error("Weight %0d mismatch. Expected=%h Actual=%h",
-                        idx, expected, actual);
-        end
-        else
-                $display("Weight %0d PASS",idx);
+	integer i;
+	// 9 weights * 2 rows = 18 words required
+	for (i = 0; i < 18; i = i + 1) begin
+		if (i % 2 == 0)
+			bram_array[(base_addr >> 2) + i] = start_val + (i / 2);
+		else
+			bram_array[(base_addr >> 2) + i] = 32'h0000_0000;
+	end
 end
 endtask
 
-task run_test(input [31:0] base);
+task automatic check_eq1(
+	input logic		actual,
+	input logic		expected,
+	input string		msg
+);
 begin
-        @(posedge clk);
-        #2;
-
-        base_address      = base;
-        num_kernels       = 9;
-        weight_load_start = 1;
-
-        @(posedge clk);
-        #2;
-
-        weight_load_start = 0;
-
-        wait_done();
-
-        print_weights();
-
-        check_weight(w0_reg,64'h00000000_00000001,0);
-        check_weight(w1_reg,64'h00000000_00000002,1);
-        check_weight(w2_reg,64'h00000000_00000003,2);
-        check_weight(w3_reg,64'h00000000_00000004,3);
-        check_weight(w4_reg,64'h00000000_00000005,4);
-        check_weight(w5_reg,64'h00000000_00000006,5);
-        check_weight(w6_reg,64'h00000000_00000007,6);
-        check_weight(w7_reg,64'h00000000_00000008,7);
-        check_weight(w8_reg,64'h00000000_00000009,8);
+	if (actual !== expected) begin
+		errors++;
+		$display("ERROR C:%0d - %s act:%b exp:%b", cycle_count, msg, actual, expected);
+	end
 end
 endtask
 
+task automatic check_weight(
+	input logic [63:0]	actual,
+	input logic [63:0]	expected,
+	input integer		idx
+);
+begin
+	if (actual !== expected) begin
+		errors++;
+		$display("ERROR C:%0d - Weight %0d mismatch. act:%h exp:%h", cycle_count, idx, actual, expected);
+	end
+end
+endtask
+
+task automatic wait_done;
+begin
+	while (1) begin
+		@(posedge clk);
+		#8; // Sample late in the clock cycle to mimic post-synth stability
+		if (mac_weight_valid === 1'b1) break;
+	end
+end
+endtask
+
+task automatic verify_all_weights(
+	input logic [31:0]	start_val
+);
+begin
+	check_weight(w0_reg, {32'd0, start_val + 0}, 0);
+	check_weight(w1_reg, {32'd0, start_val + 1}, 1);
+	check_weight(w2_reg, {32'd0, start_val + 2}, 2);
+	check_weight(w3_reg, {32'd0, start_val + 3}, 3);
+	check_weight(w4_reg, {32'd0, start_val + 4}, 4);
+	check_weight(w5_reg, {32'd0, start_val + 5}, 5);
+	check_weight(w6_reg, {32'd0, start_val + 6}, 6);
+	check_weight(w7_reg, {32'd0, start_val + 7}, 7);
+	check_weight(w8_reg, {32'd0, start_val + 8}, 8);
+end
+endtask
+
+//-----------------//
+// Stimulus Tasks  //
+//-----------------//
+task automatic test_standard_load(
+	input logic [31:0]	base,
+	input logic [31:0]	val
+);
+begin
+	$display("--- RUNNING TEST: Standard Load at Base %08h ---", base);
+	prep_bram(base, val);
+
+	@(posedge clk);
+	#2;
+	base_address		= base;
+	num_kernels		= 9;
+	weight_load_start	= 1'b1;
+
+	@(posedge clk);
+	#2;
+	weight_load_start	= 1'b0;
+
+	wait_done();
+	verify_all_weights(val);
+	tests_run++;
+	$display("PASS: Standard Load Completed");
+end
+endtask
+
+task automatic test_mid_load_reset(
+	input logic [31:0]	base,
+	input logic [31:0]	val
+);
+begin
+	$display("--- RUNNING TEST: Error Injection (Mid-Fetch Reset) ---");
+	prep_bram(base, val);
+
+	@(posedge clk);
+	#2;
+	base_address		= base;
+	num_kernels		= 9;
+	weight_load_start	= 1'b1;
+
+	@(posedge clk);
+	#2;
+	weight_load_start	= 1'b0;
+
+	// Wait exactly 15 cycles (FSM is actively fetching weights from BRAM)
+	repeat (15) @(posedge clk);
+
+	// INJECT RESET MID-FETCH
+	#2;
+	resetn = 1'b0;
+	$display("INFO C:%0d - Asserting resetn mid-fetch to simulate abort", cycle_count);
+
+	repeat (5) @(posedge clk);
+	#2;
+	resetn = 1'b1;
+	$display("INFO C:%0d - De-asserting resetn", cycle_count);
+
+	@(posedge clk);
+	#8;
+	// Verify FSM correctly cleared the valid flag upon reset
+	check_eq1(mac_weight_valid, 1'b0, "mac_weight_valid should clear on reset");
+	check_eq1(bram_weight_valid, 1'b0, "bram_weight_valid should clear on reset");
+
+	// Run a full load to verify the FSM counters recovered properly
+	$display("INFO: Restarting load to ensure state counters are clean...");
+	@(posedge clk);
+	#2;
+	weight_load_start	= 1'b1;
+
+	@(posedge clk);
+	#2;
+	weight_load_start	= 1'b0;
+
+	wait_done();
+	verify_all_weights(val);
+	tests_run++;
+	$display("PASS: Mid-Fetch Reset Recovered Successfully");
+end
+endtask
+
+//------------------//
+// Main Stimulus    //
+//------------------//
 initial
 begin
-        clk = 0;
-        resetn = 0;
+	// Initialize
+	resetn			= 1'b0;
+	weight_load_start	= 1'b0;
+	base_address		= 32'd0;
+	num_kernels		= 7'd0;
+	errors			= 0;
+	tests_run		= 0;
 
-        weight_load_start = 0;
-        base_address = 0;
-        num_kernels = 0;
+	// Initialize all BRAM to zero to prevent Xs
+	for (int i = 0; i < 256; i++) begin
+		bram_array[i] = 32'd0;
+	end
 
-        repeat(20) @(posedge clk);
+	repeat(20) @(posedge clk);
+	#2;
+	resetn = 1'b1;
 
-        resetn = 1;
+	repeat(10) @(posedge clk);
 
-        repeat(50) @(posedge clk);
+	// 1. Test standard operation at Base Address 0
+	test_standard_load(32'h0000_0000, 32'h0000_0001);
+	repeat(10) @(posedge clk);
 
-        run_test(32'd0);
+	// 2. Test standard operation at Non-Zero Base Address
+	test_standard_load(32'h0000_0040, 32'h0000_0100);
+	repeat(10) @(posedge clk);
 
-        #1000;
-        $finish;
+	// 3. Test State Machine Reset Recovery
+	test_mid_load_reset(32'h0000_0080, 32'h0000_0200);
+	repeat(10) @(posedge clk);
+
+	if (errors == 0)
+		$display("TEST RESULT: ALL TESTS PASSED SUCCESSFULLY. (%0d tests run)", tests_run);
+	else
+		$display("TEST RESULT: FAILED WITH %0d ERRORS.", errors);
+
+	#500;
+	$finish;
 end
 
 endmodule

@@ -120,6 +120,7 @@ begin
 	else
 	begin
 		bram_weight_valid <= 1'b0;
+		mac_weight_valid <= 1'b0;
 
 		case (state)
 			IDLE:
@@ -127,6 +128,9 @@ begin
 				weight_idx_cnt <= 4'd0;
 				kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
 				bram_req_pending <= 1'b0;
+				bram_weight_valid <= 1'b0;
+				mac_weight_valid <= 1'b0;
+				bram_weight_raddr <= 32'd0;
 
 				if (weight_load_start)
 				begin
