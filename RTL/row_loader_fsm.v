@@ -106,6 +106,7 @@ begin
 				word_count <= 4'd0;
 				bram_image_valid <= 1'b0;
 				bram_req_pending <= 1'b0;
+				bram_image_raddr <= 32'b0;
 			end
 
 			PAD:
@@ -189,7 +190,7 @@ begin
 			else
 				next = CALC_ADDR;
 		end
-		
+
 		CAPTURE:
 		begin
 			if (word_count == WORDS_PER_ROW - 1)
