@@ -95,6 +95,7 @@ begin
 		row_load_done    <= 1'b0;
 		bram_image_valid <= 1'b0;
 		bram_req_pending <= 1'b0;
+		bram_image_raddr <= 32'b0;
 	end
 	else
 	begin
