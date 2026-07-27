@@ -18,7 +18,7 @@ module window_generator(
 	input  wire         clk,
 	input  wire         resetn,
 
-	// from image_loader_fsm
+	// from image_loader_wrapper
 	input  wire         buffer_valid,
 	input  wire [271:0] line0, line1, line2,
 

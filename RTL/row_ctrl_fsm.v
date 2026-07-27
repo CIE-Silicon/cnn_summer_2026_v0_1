@@ -5,8 +5,8 @@
 // Module Name: loop_ctrl_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-// Loads image rows one at a time, keeps the last 3 rows ready for convolution,
-// and moves on to the next channel once each one is done.
+// Loads the image data 3 rows at a time from the BRAM IP and provides it to the mac_parallel module.
+// It is responsible for dynamically shifting the rows and also has logic to load multiple channels of image data.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 module row_ctrl_fsm
 #(
@@ -29,8 +29,10 @@ module row_ctrl_fsm
 	input  wire [ROW_DATA_WIDTH-1:0] row_data,
 	input  wire                      row_load_done,
 
-	// from conv engine / write-back
+	// from window_generator
 	input  wire                      conv_exe_done,
+
+	// from store_fsm
 	input  wire                      store_halt,
 
 	// to channel_addr_fsm
@@ -38,11 +40,10 @@ module row_ctrl_fsm
 
 	// to row_loader_fsm
 	output reg                       load_row,
-
 	output reg                       is_pad_row,
 	output reg  [31:0]               row_base_addr,
 
-	// to mac_parallel
+	// to window_generator
 	output reg                       buffer_valid,
 	output reg  [LINE_WIDTH-1:0]     line0,
 	output reg  [LINE_WIDTH-1:0]     line1,
@@ -131,7 +132,7 @@ begin
 
 			CHANNEL_SETUP:
 			begin
-				if (!all_channels_done)
+				if (!all_channels_done && !advance_channel)
 				begin
 					row_base_addr <= channel_base_addr;
 					row_number   <= {IMAGE_SIZE_BITS{1'b0}};
@@ -222,7 +223,14 @@ begin
 		end
 
 		CHANNEL_SETUP:
-			next = all_channels_done ? FINISH : LOAD_ROW;
+		begin
+			if (advance_channel)
+				next = CHANNEL_SETUP;
+			else if (all_channels_done)
+				next = FINISH;
+			else
+				next = LOAD_ROW;
+		end
 
 		LOAD_ROW:
 			next = (row_number == 8'd2 && row_load_done) ? WAIT_FOR_CONV : LOAD_ROW;

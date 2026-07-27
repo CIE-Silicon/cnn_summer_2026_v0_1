@@ -8,7 +8,7 @@
 // Description:
 // Verifies channel address tracking and stride calculation logic.
 // Injects mid-operation resets, tests single-channel edge cases, and
-// validates dynamic image_size stride math.
+// validates dynamic image_size stride math (including size 64 tests).
 // Structured for post-synthesis timing simulation compatibility.
 //////////////////////////////////////////////////////////////////////////////////
 

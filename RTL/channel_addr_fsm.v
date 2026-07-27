@@ -7,11 +7,11 @@
 // Description:
 // Holds the current channel index and the current channel's BRAM base
 // address. Makes no decisions of its own -- it only reacts when
-// loop_ctrl_fsm pulses one of its two control inputs. On start it resets to
+// row_ctrl_fsm pulses one of its two control inputs. On start it resets to
 // channel 0 (channel_base_addr = image_base_addr). On advance_channel it
 // either steps to the next channel's address, or, if it was already on the
 // last channel, raises all_channels_done instead of stepping further.
-// Communicates only with loop_ctrl_fsm.
+// Communicates only with row_ctrl_fsm.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module channel_addr_fsm
@@ -24,10 +24,10 @@ module channel_addr_fsm
 	input  wire [6:0]  num_channels,
 	input  wire [6:0]  image_size,
 
-	// from loop_ctrl_fsm
+	// from row_ctrl_fsm
 	input  wire        advance_channel,
 
-	// to loop_ctrl_fsm
+	// to row_ctrl_fsm
 	output reg  [31:0] channel_base_addr,
 	output reg         all_channels_done,
 	output reg         channel_start
@@ -141,7 +141,7 @@ end
 //-------------------------//
 // Continuous Assignments  //
 //-------------------------//
-assign words_per_row  = image_size[5:2];
+assign words_per_row  = image_size[6:2];
 assign channel_stride = ({25'd0, image_size} * {27'd0, words_per_row}) << 2;
 
 endmodule

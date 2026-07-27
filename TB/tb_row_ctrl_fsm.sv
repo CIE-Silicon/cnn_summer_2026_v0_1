@@ -2,13 +2,13 @@
 
 //////////////////////////////////////////////////////////////////////////////////
 // Engineer: Anagha Saraswathy
-// Update Date: 27.07.2026
+// Update Date: 28.07.2026
 // Module Name: tb_row_ctrl_fsm
 // Project Name: cnn hardware accelerator
 // Description:
 // Verifies row control FSM pipeline across multiple image rows and channels.
 // Injects mid-operation resets and store halts to test edge cases.
-// Structured for post-synthesis timing simulation compatibility.
+// Utilizes Full Handshaking to ensure post-synthesis timing safety.
 //////////////////////////////////////////////////////////////////////////////////
 
 module tb_row_ctrl_fsm;
@@ -137,7 +137,7 @@ endtask
 
 /*
  * Post-synth safe convolution task.
- * Continuously monitors using wait(), then asserts conv_exe_done on negedge.
+ * Implements a FULL HANDSHAKE to prevent racing ahead of the hardware.
  */
 task automatic pulse_conv_done;
 begin
@@ -148,6 +148,9 @@ begin
 
 	@(negedge clk);
 	conv_exe_done = 1'b1;
+
+	// FULL HANDSHAKE: Wait for FSM to physically acknowledge and drop valid
+	wait (buffer_valid === 1'b0);
 
 	@(negedge clk);
 	conv_exe_done = 1'b0;
@@ -172,7 +175,7 @@ begin
 	channel_start		= 1'b0;
 
 	// Load Initial 3 Rows (Row 0 is Pad, Row 1-2 Data)
-	provide_row(256'h1111); // Testbench will override 1111 with 0s because is_pad_row is high
+	provide_row(256'h1111);
 	provide_row(256'h2222);
 	provide_row(256'h3333);
 
@@ -184,7 +187,7 @@ begin
 	provide_row(256'h5555);
 
 	pulse_conv_done();
-	provide_row(256'h6666); // Row 5 is Pad (Testbench will override 6666 with 0s)
+	provide_row(256'h6666);
 
 	// Flag to FSM that this is the absolute last channel so it cleanly returns to IDLE
 	@(negedge clk);
