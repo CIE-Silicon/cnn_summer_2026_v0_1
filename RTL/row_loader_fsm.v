@@ -18,7 +18,7 @@ module row_loader_fsm
 	input  wire                      resetn,
 	input  wire                      load_row,
 	input  wire                      is_pad_row,
-	input  wire [31:0]               image_base_addr,
+	input  wire [31:0]               row_base_addr,
 
 	// from store_fsm
 	input  wire                      store_halt,
@@ -210,6 +210,6 @@ end
  * row_base_addr is loop_ctrl_fsm's cur_row_addr passed straight through,
  * word_count steps it one word at a time within the row.
  */
-assign next_bram_image_raddr = image_base_addr + ({28'd0, word_count} << 2);
+assign next_bram_image_raddr = row_base_addr + ({28'd0, word_count} << 2);
 
 endmodule
