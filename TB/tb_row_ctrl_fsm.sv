@@ -21,7 +21,6 @@ localparam LINE_WIDTH		= ROW_DATA_WIDTH + 2 * LINE_PAD_BITS;
 logic				clk;
 logic				resetn;
 
-logic				start;
 logic	[6:0]			image_size;
 logic	[31:0]			channel_base_addr;
 logic				all_channels_done;
@@ -59,15 +58,14 @@ row_ctrl_fsm #(
 ) dut (
 	.clk			(clk),
 	.resetn			(resetn),
-	.start			(start),
 	.image_size		(image_size),
+	.channel_start		(channel_start),
 	.channel_base_addr	(channel_base_addr),
 	.all_channels_done	(all_channels_done),
 	.row_data		(row_data),
 	.row_load_done		(row_load_done),
 	.conv_exe_done		(conv_exe_done),
 	.store_halt		(store_halt),
-	.channel_start		(channel_start),
 	.advance_channel	(advance_channel),
 	.load_row		(load_row),
 	.is_pad_row		(is_pad_row),
@@ -113,7 +111,7 @@ end
 endtask
 
 /*
- * Post-synth safe driving task. 
+ * Post-synth safe driving task.
  * Continuously monitors using wait(), then drives on negedge to ensure timing margins.
  * Perfectly mocks row_loader_fsm by forcing 0s if is_pad_row is high.
  */
@@ -124,12 +122,12 @@ begin
 	wait (load_row === 1'b1);
 
 	@(negedge clk);
-	
+
 	if (is_pad_row === 1'b1)
 		row_data = {ROW_DATA_WIDTH{1'b0}};
 	else
 		row_data = data;
-		
+
 	row_load_done	= 1'b1;
 
 	@(negedge clk);
@@ -138,7 +136,7 @@ end
 endtask
 
 /*
- * Post-synth safe convolution task. 
+ * Post-synth safe convolution task.
  * Continuously monitors using wait(), then asserts conv_exe_done on negedge.
  */
 task automatic pulse_conv_done;
@@ -168,10 +166,10 @@ begin
 	@(negedge clk);
 	channel_base_addr	= base;
 	all_channels_done	= 1'b0;
-	start			= 1'b1;
+	channel_start		= 1'b1;
 
 	@(negedge clk);
-	start			= 1'b0;
+	channel_start		= 1'b0;
 
 	// Load Initial 3 Rows (Row 0 is Pad, Row 1-2 Data)
 	provide_row(256'h1111); // Testbench will override 1111 with 0s because is_pad_row is high
@@ -212,10 +210,10 @@ begin
 	@(negedge clk);
 	channel_base_addr	= base;
 	all_channels_done	= 1'b0;
-	start			= 1'b1;
+	channel_start		= 1'b1;
 
 	@(negedge clk);
-	start			= 1'b0;
+	channel_start		= 1'b0;
 
 	// Load just 2 rows and abort
 	provide_row(256'hAAAA);
@@ -227,14 +225,14 @@ begin
 	$display("INFO C:%0d - Asserting resetn mid-operation to simulate abort", cycle_count);
 
 	repeat (5) @(posedge clk);
-	
+
 	@(negedge clk);
 	resetn = 1'b1;
 	$display("INFO C:%0d - De-asserting resetn", cycle_count);
 
 	// Allow post-reset settling time before validating signal clears
 	repeat (2) @(posedge clk);
-	
+
 	check_eq1(buffer_valid, 1'b0, "buffer_valid should clear on reset");
 	check_eq1(load_row, 1'b0, "load_row should clear on reset");
 
@@ -252,10 +250,10 @@ begin
 	@(negedge clk);
 	channel_base_addr	= base;
 	store_halt		= 1'b1; // Assert early to ensure it blocks completion
-	start			= 1'b1;
+	channel_start		= 1'b1;
 
 	@(negedge clk);
-	start			= 1'b0;
+	channel_start		= 1'b0;
 
 	// Load Initial 3 Rows
 	provide_row(256'h7777);
@@ -302,7 +300,7 @@ initial
 begin
 	// Initialize Signals
 	resetn			= 1'b0;
-	start			= 1'b0;
+	channel_start		= 1'b0;
 	image_size		= IMAGE_SIZE;
 	channel_base_addr	= 32'd0;
 	all_channels_done	= 1'b0;

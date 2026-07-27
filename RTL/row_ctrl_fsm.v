@@ -18,12 +18,12 @@ module row_ctrl_fsm
 	// from external
 	input  wire                      clk,
 	input  wire                      resetn,
-	input  wire                      start,
 	input  wire [6:0]                image_size,
 
 	// from channel_addr_fsm
 	input  wire [31:0]               channel_base_addr,
 	input  wire                      all_channels_done,
+	input  wire                      channel_start,
 
 	// from row_loader_fsm
 	input  wire [ROW_DATA_WIDTH-1:0] row_data,
@@ -34,7 +34,6 @@ module row_ctrl_fsm
 	input  wire                      store_halt,
 
 	// to channel_addr_fsm
-	output reg                       channel_start,
 	output reg                       advance_channel,
 
 	// to row_loader_fsm
@@ -107,7 +106,6 @@ begin
 		line0          <= {LINE_WIDTH{1'b0}};
 		line1          <= {LINE_WIDTH{1'b0}};
 		line2          <= {LINE_WIDTH{1'b0}};
-		channel_start  <= 1'b0;
 		advance_channel <= 1'b0;
 		load_row       <= 1'b0;
 		is_pad_row     <= 1'b0;
@@ -119,7 +117,6 @@ begin
 		done         <= 1'b0;
 		load_row     <= 1'b0;
 		is_pad_row <= 1'b0;
-		channel_start <= 1'b0;
 		advance_channel <= 1'b0;
 
 		case (state)
@@ -130,8 +127,6 @@ begin
 				done <= 1'b0;
 				advance_channel <= 1'b0;
 				row_number <= {IMAGE_SIZE_BITS{1'b0}};
-				if (start)
-					channel_start <= 1'b1;
 			end
 
 			CHANNEL_SETUP:
@@ -220,7 +215,7 @@ begin
 	case (state)
 		IDLE:
 		begin
-			if (start)
+			if (channel_start)
 				next = CHANNEL_SETUP;
 			else
 				next = IDLE;
