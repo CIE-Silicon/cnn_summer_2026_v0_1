@@ -1,27 +1,17 @@
 `timescale 1ns / 1ps
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Engineer: Anagha Saraswathy
-// Last Modified: 22.07.2026
+// Last Modified: 23.07.2026
 // Module Name: loop_ctrl_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-// The brain. Owns row_number and is the only place that decides what
-// happens next: another row in the same channel, moving on to
-// the next channel, or being fully done. Drives row_loader_fsm one row at a
-// time, builds the 3-line sliding window (line0/line1/line2) for the conv
-// engine, and waits on conv_exe_done between rows.
-// channel_addr_fsm makes no decisions of its own -- this module tells it
-// when to move (channel_start / advance_channel) and reads back whatever it
-// produces (channel_base_addr / all_channels_done) exactly one cycle later,
-// since that's a real register update, not a wasted state.
-// Only pulses done once the last write-back has released store_halt.
-// Communicates with channel_addr_fsm, row_loader_fsm, and the conv engine.
+// Loads image rows one at a time, keeps the last 3 rows ready for convolution,
+// and moves on to the next channel once each one is done.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 module loop_ctrl_fsm
 #(
 	parameter ROW_DATA_WIDTH = 256,               // must match row_loader_fsm's ROW_DATA_WIDTH
-	parameter LINE_PAD_BITS  = 8,                 // 1 zero byte either side, for 3x3 conv borders
-	parameter LINE_WIDTH     = ROW_DATA_WIDTH + 2*LINE_PAD_BITS
+	parameter LINE_PAD_BITS  = 8                  // 1 zero byte either side, for 3x3 conv borders
 )
 (
 	// from external
@@ -39,13 +29,11 @@ module loop_ctrl_fsm
 	input  wire                      conv_exe_done,
 	input  wire                      store_halt,
 	// to channel_addr_fsm
-	output wire                      channel_start,
-	output wire                      advance_channel,
+	output reg                       channel_start,
+	output reg                       advance_channel,
 	// to row_loader_fsm
-	output reg                       load_row,        // 1-cycle pulse: registered, armed by whichever
-	                                                   // state transitions into LOAD_ROW, cleared the
-	                                                   // very next cycle -- row_loader_fsm can level-check
-	                                                   // it with no edge-detection of its own needed
+	output reg                       load_row,        
+	
 	output wire                      is_pad_row,
 	output wire [31:0]               row_base_addr,
 	// to conv engine
@@ -56,6 +44,8 @@ module loop_ctrl_fsm
 	// to external
 	output reg                       done
 );
+
+localparam LINE_WIDTH = ROW_DATA_WIDTH + 2*LINE_PAD_BITS;
 
 //-----------------------------//
 // parameters for FSM states   //
@@ -70,6 +60,8 @@ localparam [2:0]
 	FINISH         = 3'd6;
 
 reg [2:0] state, next;
+
+localparam WORDS_PER_ROW = ROW_DATA_WIDTH / 32;
 
 //-------------------------------//
 // Intermediate internal signals //
@@ -89,11 +81,9 @@ reg [7:0] row_number;
  */
 reg [31:0] cur_row_addr;
 
-wire [3:0]  words_per_row;
 wire [7:0]  rows_per_channel;
 wire [31:0] row_stride;
-
-wire is_zero_row;
+wire [31:0] next_cur_row_addr;
 
 //-----------------//
 // State Register  //
@@ -126,12 +116,12 @@ begin
 		buffer_valid <= 1'b0;
 		done         <= 1'b0;
 		load_row     <= 1'b0;   
-		                        
 
 		case (state)
 			IDLE: ; 
 
 			CHANNEL_SETUP:
+				
 				if (!all_channels_done)
 				begin
 					cur_row_addr <= channel_base_addr;
@@ -146,16 +136,18 @@ begin
 					8'd1: line1 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
 					8'd2:
 						line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-					default: ; // if other case: registers hold their state
+					default: ;
 				endcase
 
 				row_number <= row_number + 8'd1;
 
-				if (row_number != 8'd2 && !is_zero_row)
-					cur_row_addr <= cur_row_addr + row_stride;
-
+				
 				if (row_number != 8'd2)
+				begin
 					load_row <= 1'b1;
+					if (!is_pad_row)
+						cur_row_addr <= next_cur_row_addr;
+				end
 			end
 
 			WAIT_FOR_CONV:
@@ -164,11 +156,12 @@ begin
 				if (conv_exe_done)
 				begin
 					buffer_valid <= 1'b0;
-					if (!is_zero_row)
-						cur_row_addr <= cur_row_addr + row_stride;
-					
 					if (row_number != rows_per_channel)
+					begin
 						load_row <= 1'b1;
+						if (!is_pad_row)
+							cur_row_addr <= next_cur_row_addr;
+					end
 				end
 			end
 
@@ -184,7 +177,7 @@ begin
 				if (!store_halt)
 					done <= 1'b1;
 
-			default: ; // if other case: registers hold their state
+			default: ; 
 		endcase
 	end
 end
@@ -194,11 +187,17 @@ end
 //----------------------------------//
 always @(*)
 begin
-	next = state;
+	next            = state;
+	channel_start   = 1'b0;
+	advance_channel = 1'b0;
+
 	case (state)
 		IDLE:
 			if (start)
-				next = CHANNEL_SETUP;
+			begin
+				next          = CHANNEL_SETUP;
+				channel_start = 1'b1;
+			end
 
 		CHANNEL_SETUP:
 			next = all_channels_done ? FINISH : LOAD_ROW;
@@ -208,19 +207,24 @@ begin
 				next = (row_number < 8'd3) ? COPY_ROW : SHIFT_ROWS;
 
 		COPY_ROW:
-			// rows 0 and 1 don't need conv yet -- go straight to the next row.
-			// row 2 completes the initial 3-line window, so conv can finally run.
 			next = (row_number == 8'd2) ? WAIT_FOR_CONV : LOAD_ROW;
 
 		WAIT_FOR_CONV:
 			if (conv_exe_done)
-				next = (row_number == rows_per_channel) ? CHANNEL_SETUP : LOAD_ROW;
+			begin
+				if (row_number == rows_per_channel)
+				begin
+					next            = CHANNEL_SETUP;
+					advance_channel = 1'b1;
+				end
+				else
+					next = LOAD_ROW;
+			end
 
 		SHIFT_ROWS:
 			next = WAIT_FOR_CONV;
 
 		FINISH:
-			// hold here until the last write-back releases the bus
 			next = store_halt ? FINISH : IDLE;
 
 		default:
@@ -231,21 +235,10 @@ end
 //-------------------------//
 // Continuous Assignments  //
 //-------------------------//
-assign words_per_row     = image_size[5:2];
 assign rows_per_channel  = {1'b0, image_size} + 8'd2;
-assign row_stride        = ({24'd0, words_per_row}) << 2;
-
-// row_number 0 = top pad; rows_per_channel-1 = bottom pad (image_size+1)
-assign is_zero_row = (row_number == 8'd0) || (row_number == rows_per_channel - 8'd1);
-
-/*
- * Every one of these is combinational, straight off already-stable
- * registers -- none of them cost an extra cycle to become valid once the
- * state that implies them is entered.
- */
-assign channel_start   = (state == IDLE) && start;
-assign advance_channel = (state == WAIT_FOR_CONV) && conv_exe_done && (row_number == rows_per_channel);
-assign is_pad_row       = is_zero_row;
-assign row_base_addr    = cur_row_addr;
+assign row_stride        = WORDS_PER_ROW * 4;   
+assign next_cur_row_addr = cur_row_addr + row_stride;
+assign is_pad_row    = (row_number == 8'd0) || (row_number == rows_per_channel - 8'd1);
+assign row_base_addr = cur_row_addr;
 
 endmodule
