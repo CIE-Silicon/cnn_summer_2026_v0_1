@@ -47,8 +47,8 @@ always @(posedge clk)
 begin
 	if (!resetn)
 	begin
-		col           <= 5'd0;
-		window_valid  <= 1'b0;
+		col <= 5'd0;
+		window_valid <= 1'b0;
 		conv_exe_done <= 1'b0;
 		a0<=0; a1<=0; a2<=0;
 		a3<=0; a4<=0; a5<=0;
@@ -57,50 +57,39 @@ begin
 	else
 	begin
 		conv_exe_done <= 1'b0;
-		if (!buffer_valid)
-		begin
-			window_valid <= 1'b0;
-			col          <= 5'd0;
-		end
-		else if (buffer_valid && !window_valid)
-		begin
+		window_valid <= 1'b0;
 
-			// extracts 3x3 window at col=0 and asserts window valid to tell mac to start computing
-			a0 <= line0[(col+0)*8 +: 8]; a1 <= line0[(col+1)*8 +: 8]; a2 <= line0[(col+2)*8 +: 8];
-			a3 <= line1[(col+0)*8 +: 8]; a4 <= line1[(col+1)*8 +: 8]; a5 <= line1[(col+2)*8 +: 8];
-			a6 <= line2[(col+0)*8 +: 8]; a7 <= line2[(col+1)*8 +: 8]; a8 <= line2[(col+2)*8 +: 8];
+		/*
+		 * This is the initial trigger for the window generation process.
+		 * When buffer_valid is asserted, it indicates that the line buffers have valid data.
+		 * The first 3x3 window is extracted from the first three columns of the line
+		 */
+		if (buffer_valid)
+		begin
+			col <= 5'd0;
+			a0 <= line0[0*8 +: 8]; a1 <= line0[1*8 +: 8]; a2 <= line0[2*8 +: 8];
+			a3 <= line1[0*8 +: 8]; a4 <= line1[1*8 +: 8]; a5 <= line1[2*8 +: 8];
+			a6 <= line2[0*8 +: 8]; a7 <= line2[1*8 +: 8]; a8 <= line2[2*8 +: 8];
 			window_valid <= 1'b1;
 		end
-		else if (window_valid && mac_valid)
+		else if (mac_valid)
 		begin
 			if (col == 5'd31)
 			begin
-				col           <= 5'd0;
-				window_valid  <= 1'b0;
+				col <= 5'd0;
+				window_valid <= 1'b0;
 				conv_exe_done <= 1'b1;
 			end
 			else
 			begin
-				col <= next_col;
+				col <= col + 1'b1;
 				a0 <= line0[(col+1)*8 +: 8]; a1 <= line0[(col+2)*8 +: 8]; a2 <= line0[(col+3)*8 +: 8];
 				a3 <= line1[(col+1)*8 +: 8]; a4 <= line1[(col+2)*8 +: 8]; a5 <= line1[(col+3)*8 +: 8];
 				a6 <= line2[(col+1)*8 +: 8]; a7 <= line2[(col+2)*8 +: 8]; a8 <= line2[(col+3)*8 +: 8];
+				window_valid <= 1'b1;
 			end
 		end
 	end
-end
-
-//-------------------//
-// Next column logic //
-//-------------------//
-always @(*)
-begin
-	if (!resetn)
-		next_col = 5'd0;
-	else if (buffer_valid && !window_valid && col != 5'd31)
-		next_col = col + 1'b1;
-	else
-		next_col = col;
 end
 
 endmodule

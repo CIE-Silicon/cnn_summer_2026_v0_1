@@ -100,7 +100,7 @@ begin
 					end
 				end
 
-			default: ; // if other case: registers hold their state
+			default: ; /
 		endcase
 	end
 end
@@ -118,7 +118,7 @@ begin
 
 		ACTIVE:
 			if (advance_channel && (channel_idx == num_channels - 7'd1))
-				next = IDLE; // all channels done -- back to waiting for a fresh start
+				next = IDLE; 
 
 		default:
 			next = IDLE;
