@@ -2,7 +2,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////
 // Engineer: Pranav Lokesh
-// Update Date: 07.07.2026
+// Update Date: 31.07.2026
 // Module Name: tb_weight_loader_fsm
 // Project Name: cnn hardware accelerator
 // Description:
@@ -20,7 +20,7 @@ logic				clk;
 logic				resetn;
 
 logic				weight_load_start;
-logic	[31:0]			base_address;
+logic	[31:0]			weight_base_addr;
 logic	[6:0]			num_kernels;
 
 logic				bram_weight_ready;
@@ -46,7 +46,7 @@ weight_loader_fsm #(
 	.clk			(clk),
 	.resetn			(resetn),
 	.weight_load_start	(weight_load_start),
-	.base_address		(base_address),
+	.weight_base_addr	(weight_base_addr),
 	.num_kernels		(num_kernels),
 	.bram_weight_ready	(bram_weight_ready),
 	.bram_weight_rdata	(bram_weight_rdata),
@@ -204,7 +204,7 @@ begin
 
 	@(posedge clk);
 	#2;
-	base_address		= base;
+	weight_base_addr	= base;
 	num_kernels		= 9;
 	weight_load_start	= 1'b1;
 
@@ -229,7 +229,7 @@ begin
 
 	@(posedge clk);
 	#2;
-	base_address		= base;
+	weight_base_addr	= base;
 	num_kernels		= 9;
 	weight_load_start	= 1'b1;
 
@@ -281,7 +281,7 @@ begin
 	// Initialize
 	resetn			= 1'b0;
 	weight_load_start	= 1'b0;
-	base_address		= 32'd0;
+	weight_base_addr	= 32'd0;
 	num_kernels		= 7'd0;
 	errors			= 0;
 	tests_run		= 0;
