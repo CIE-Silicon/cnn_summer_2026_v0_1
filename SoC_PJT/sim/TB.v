@@ -90,7 +90,17 @@ module TB(
             
     end
 end
-
-   
-    
+    // BootROM: still fast-loaded via $readmemh - this is fine to keep.
+    // picorv32's own internal BootROM BRAM is effectively single-port
+    // from the CPU's perspective (no separate coprocessor reading it via
+    // a second port), so there's no Port-A/Port-B visibility problem
+    // here, and no risk of colliding with any of the CPU's own legitimate
+    // bus activity the way blk_mem_gen_0 did.
+    initial begin
+        #1
+        $readmemh("bootrom_fast_load.memh",
+            dut.design_1_i.picorv32_core_0.inst.bram.inst.native_mem_module.blk_mem_gen_v8_4_12_inst .memory);
+        $display("TB_NOTE: Fast-loaded custom firmware into BootROM bypassing synthesis!");
+    end
+ 
 endmodule
