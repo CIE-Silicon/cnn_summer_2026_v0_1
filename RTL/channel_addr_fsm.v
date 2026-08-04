@@ -20,13 +20,16 @@ module channel_addr_fsm
 	input  wire        resetn,
 	input  wire        start,
 	input  wire [31:0] image_base_addr,
-	input  wire [6:0]  num_channels,   // assumed >= 1
+	input  wire [6:0]  num_channels,
 	input  wire [6:0]  image_size,
+
 	// from loop_ctrl_fsm
 	input  wire        advance_channel,
+
 	// to loop_ctrl_fsm
 	output reg  [31:0] channel_base_addr,
-	output reg         all_channels_done
+	output reg         all_channels_done,
+	output reg         channel_start
 );
 
 //-----------------------------//
@@ -52,7 +55,7 @@ reg [6:0] channel_idx;
  * occupy in BRAM: image_size real rows, words_per_row words each, 4 bytes
  * per word. Added to channel_base_addr on every advance_channel.
  */
-wire [3:0]  words_per_row; 
+wire [3:0]  words_per_row;
 wire [31:0] channel_stride;
 
 //-----------------//
@@ -79,6 +82,8 @@ begin
 	end
 	else
 	begin
+		channel_start <= 1'b0;
+
 		case (state)
 			IDLE:
 				if (start)
@@ -86,21 +91,21 @@ begin
 					channel_idx       <= 7'd0;
 					channel_base_addr <= image_base_addr;
 					all_channels_done <= 1'b0;
+					channel_start     <= 1'b1;
 				end
 
 			ACTIVE:
 				if (advance_channel)
 				begin
 					if (channel_idx == num_channels - 7'd1)
-						all_channels_done <= 1'b1; // last channel -- nothing further to step to
+						all_channels_done <= 1'b1;
 					else
 					begin
 						channel_idx       <= channel_idx + 7'd1;
 						channel_base_addr <= channel_base_addr + channel_stride;
+						channel_start     <= 1'b1;
 					end
 				end
-
-			default: ; /
 		endcase
 	end
 end
@@ -111,14 +116,19 @@ end
 always @(*)
 begin
 	next = state;
+
 	case (state)
 		IDLE:
 			if (start)
 				next = ACTIVE;
+			else
+				next = IDLE;
 
 		ACTIVE:
 			if (advance_channel && (channel_idx == num_channels - 7'd1))
-				next = IDLE; 
+				next = IDLE;
+			else
+				next = ACTIVE;
 
 		default:
 			next = IDLE;
@@ -129,8 +139,8 @@ end
 // Continuous Assignments  //
 //-------------------------//
 assign words_per_row  = image_size[5:2];
-// 	for example if image size is 32 (00100000)then words per row will be (1000)which is 8 
-assign channel_stride = {24'd0, image_size} * ({24'd0, words_per_row} << 2);
-// 32x8 =256 base addr for next channel 
+// 	for example if image size is 32 (00100000)then words per row will be (1000)which is 8
+assign channel_stride = {24'd0, image_size} * {24'd0, words_per_row};
+// 32x8 =256 base addr for next channel
 
 endmodule
