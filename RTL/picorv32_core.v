@@ -78,7 +78,13 @@ module picorv32_core #(
 	parameter [31:0] LATCHED_IRQ = 32'h ffff_ffff,
 	parameter [31:0] PROGADDR_RESET = 32'h 0000_0000,
 	parameter [31:0] PROGADDR_IRQ = 32'h 0000_0010,
-	parameter [31:0] STACKADDR = 32'h ffff_ffff
+	parameter [31:0] STACKADDR = 32'h ffff_ffff,
+	parameter        NUM_UNITS      = 16,
+	parameter        WT_REG_WIDTH   = NUM_UNITS * 4,
+	parameter        ROW_DATA_WIDTH = 256,
+	parameter        LINE_PAD_BITS  = 8,
+	parameter        LINE_WIDTH     = ROW_DATA_WIDTH + 2 * LINE_PAD_BITS,
+	parameter        IMAGE_SIZE     = 32
 ) (
 	input clk, resetn,
 	output trap,
@@ -154,11 +160,11 @@ module picorv32_core #(
 	// physical port from the mem_axi_*/PCPI path above - it does not
 	// go through picorv32_axi_adapter or the internal BootROM bram.
 	// -----------------------------------------------------------------
-	output [31:0] bram_portb_addr,  // widened to 32 bits (top 20 bits always 0) to match blk_mem_gen_0's addrb[31:0] directly
-	output        bram_portb_en,
-	output [ 3:0] bram_portb_we,
-	output [31:0] bram_portb_din,
-	input  [31:0] bram_portb_dout
+	output [31:0] addrb,  // widened to 32 bits (top 20 bits always 0) to match blk_mem_gen_0's addrb[31:0] directly
+	output        enb,
+	output [ 3:0] web,
+	output [31:0] dinb,
+	input  [31:0] doutb
 );
 	wire        temp_mem_valid;
 	wire [31:0] temp_mem_addr;
@@ -171,7 +177,7 @@ module picorv32_core #(
 
 
 	wire mem_valid, mem_instr;
-    reg mem_ready  ;
+    	reg mem_ready  ;
 	wire [31:0]mem_addr,mem_wdata ;
 	wire [3:0]mem_wstrb;
 
@@ -188,8 +194,9 @@ module picorv32_core #(
 	wire [6:0]  cnn_num_featuremaps;
 	wire [6:0]  cnn_num_channels;
 	wire [6:0]  cnn_image_size;
-	wire        cnn_weight_load_ready;
-	wire        cnn_image_load_ready;
+	wire        cnn_mac_weight_valid;
+	wire        cnn_done;
+	wire        cnn_web;
 
 
 
@@ -300,38 +307,29 @@ module picorv32_core #(
 
 		.trace_valid(trace_valid),
 		.trace_data (trace_data),
-
-		// --- CNN decoder ports: previously blank / tied to 1'b0, now
-		//     wired to the real cnn_coprocessor_wrapper instance below.
-		//     Also added .image_size, which was missing entirely before. ---
-		.image_start      (cnn_image_start      ),
-		.weight_load_start     (cnn_weight_start     ),
-		.image_base_addr  (cnn_image_base_addr  ),
-		.weight_base_addr (cnn_weight_base_addr ),
-		.dest_base_addr   (cnn_dest_base_addr   ),
-		.num_featuremaps  (cnn_num_featuremaps  ),
-		.num_channels     (cnn_num_channels     ),
-		.image_size       (cnn_image_size       ),
-		.image_load_ready (cnn_image_load_ready ),
-		.weight_load_ready(cnn_weight_load_ready)
+		.image_start (cnn_image_start),
+		.weight_load_start (cnn_weight_start),
+		.image_base_addr (cnn_image_base_addr),
+		.weight_base_addr (cnn_weight_base_addr),
+		.dest_base_addr (cnn_dest_base_addr),
+		.num_featuremaps (cnn_num_featuremaps),
+		.num_channels (cnn_num_channels),
+		.image_size (cnn_image_size),
+		.mac_weight_valid (cnn_mac_weight_valid),
+		.done(cnn_done)
 	);
-
-	// -----------------------------------------------------------------
-	// CNN co-processor wrapper (revised - cnn_coprocessor was never a
-	// real module; replaced with cnn_coprocessor_wrapper.v, which
-	// instantiates the coprocessor team's own bram_arbiter /
-	// weight_loader_fsm / image_loader_fsm / window_generator /
-	// mac_parallel / store_fsm files unmodified. Unlike
-	// cnn_accelerator_wrapper.v (which owns a private BRAM for
-	// standalone testing), this wrapper has no internal BRAM - it
-	// drives the shared BRAM's Port B directly via bram_portb_*.
-	// -----------------------------------------------------------------
-	cnn_coprocessor_wrapper u_cnn_coprocessor_wrapper (
+	cnn_coprocessor_subsystem #(
+		.NUM_UNITS (NUM_UNITS),
+		.WT_REG_WIDTH (WT_REG_WIDTH),
+		.ROW_DATA_WIDTH (ROW_DATA_WIDTH),
+		.LINE_PAD_BITS (LINE_PAD_BITS),
+		.LINE_WIDTH (LINE_WIDTH),
+		.IMAGE_SIZE (IMAGE_SIZE)
+	) u_cnn_coprocessor_subsystem (
 		.clk               (clk),
 		.resetn            (resetn),
-
-		.weight_load_start      (cnn_weight_start),
-		.image_start       (cnn_image_start),
+		.weight_load_start (cnn_weight_start),
+		.start             (cnn_image_start),
 		.weight_base_addr  (cnn_weight_base_addr),
 		.image_base_addr   (cnn_image_base_addr),
 		.dest_base_addr    (cnn_dest_base_addr),
@@ -339,15 +337,21 @@ module picorv32_core #(
 		.num_channels      (cnn_num_channels),
 		.image_size        (cnn_image_size),
 
-		.weight_load_ready (cnn_weight_load_ready),
-		.image_load_ready  (cnn_image_load_ready),
+		.mac_weight_valid  (cnn_mac_weight_valid),
+		.done              (cnn_done),
 
-		.bram_portb_addr   (bram_portb_addr),
-		.bram_portb_en     (bram_portb_en),
-		.bram_portb_we     (bram_portb_we),
-		.bram_portb_din    (bram_portb_din),
-		.bram_portb_dout   (bram_portb_dout)
+		.addrb             (addrb),
+		.enb               (enb),
+		.web               (cnn_web),
+		.dinb              (dinb),
+		.doutb             (doutb)
 	);
+
+	// web is a single write-strobe inside the CNN subsystem (whole-word
+	// writes only), but picorv32_core's own web port is [3:0] to match
+	// blk_mem_gen_0 Port B's byte-enable width. Broadcast the single
+	// strobe across all 4 byte lanes so every write commits fully.
+	assign web = {4{cnn_web}};
 
 localparam MEM_SIZE=32'h00004000;
 
