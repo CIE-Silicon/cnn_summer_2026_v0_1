@@ -5,45 +5,45 @@
 // Module Name: loop_ctrl_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-// Loads image rows one at a time, keeps the last 3 rows ready for convolution,
-// and moves on to the next channel once each one is done.
+// Loads the image data 3 rows at a time from the BRAM IP and provides it to the mac_parallel module.
+// It is responsible for dynamically shifting the rows and also has logic to load multiple channels of image data.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-module loop_ctrl_fsm
+module row_ctrl_fsm
 #(
-	parameter ROW_DATA_WIDTH = 256,               // must match row_loader_fsm's ROW_DATA_WIDTH
-	parameter LINE_PAD_BITS  = 8,                  // 1 zero byte either side, for 3x3 conv borders
+	parameter ROW_DATA_WIDTH = 256,
+	parameter LINE_PAD_BITS  = 8, // 1 zero byte either side, for 3x3 conv borders
 	parameter LINE_WIDTH = ROW_DATA_WIDTH + 2*LINE_PAD_BITS,
 	parameter IMAGE_SIZE = 32
 ) (
 	// from external
 	input  wire                      clk,
 	input  wire                      resetn,
-	input  wire                      start,
 	input  wire [6:0]                image_size,
 
 	// from channel_addr_fsm
 	input  wire [31:0]               channel_base_addr,
 	input  wire                      all_channels_done,
+	input  wire                      channel_start,
 
 	// from row_loader_fsm
 	input  wire [ROW_DATA_WIDTH-1:0] row_data,
 	input  wire                      row_load_done,
 
-	// from conv engine / write-back
+	// from window_generator
 	input  wire                      conv_exe_done,
+
+	// from store_fsm
 	input  wire                      store_halt,
 
 	// to channel_addr_fsm
-	output reg                       channel_start,
 	output reg                       advance_channel,
 
 	// to row_loader_fsm
 	output reg                       load_row,
-
-	output wire                      is_pad_row,
+	output reg                       is_pad_row,
 	output reg  [31:0]               row_base_addr,
 
-	// to mac_parallel
+	// to window_generator
 	output reg                       buffer_valid,
 	output reg  [LINE_WIDTH-1:0]     line0,
 	output reg  [LINE_WIDTH-1:0]     line1,
@@ -58,7 +58,7 @@ module loop_ctrl_fsm
 //-----------------------------//
 localparam [2:0]
 	IDLE           = 3'd0,
-	CHANNEL_SETUP  = 3'd1,   // reads channel_base_addr / all_channels_done, one cycle after kicking channel_addr_fsm
+	CHANNEL_SETUP  = 3'd1,
 	LOAD_ROW       = 3'd2,
 	WAIT_FOR_CONV  = 3'd3,
 	SHIFT_ROWS     = 3'd4,
@@ -78,9 +78,10 @@ localparam IMAGE_SIZE_BITS = $clog2(IMAGE_SIZE);
  */
 reg [IMAGE_SIZE_BITS:0] row_number;
 
-wire [IMAGE_SIZE_BITS:0]  rows_per_channel;
+wire [IMAGE_SIZE_BITS:0] rows_per_channel;
 wire [31:0] row_stride;
 wire [31:0] next_row_base_addr;
+wire current_is_pad;
 
 //-----------------//
 // State Register  //
@@ -106,9 +107,9 @@ begin
 		line0          <= {LINE_WIDTH{1'b0}};
 		line1          <= {LINE_WIDTH{1'b0}};
 		line2          <= {LINE_WIDTH{1'b0}};
-		channel_start  <= 1'b0;
 		advance_channel <= 1'b0;
 		load_row       <= 1'b0;
+		is_pad_row     <= 1'b0;
 		done           <= 1'b0;
 	end
 	else
@@ -116,7 +117,7 @@ begin
 		buffer_valid <= 1'b0;
 		done         <= 1'b0;
 		load_row     <= 1'b0;
-		channel_start <= 1'b0;
+		is_pad_row <= 1'b0;
 		advance_channel <= 1'b0;
 
 		case (state)
@@ -126,17 +127,17 @@ begin
 				buffer_valid <= 1'b0;
 				done <= 1'b0;
 				advance_channel <= 1'b0;
-				if (start)
-					channel_start <= 1'b1;
+				row_number <= {IMAGE_SIZE_BITS{1'b0}};
 			end
 
 			CHANNEL_SETUP:
 			begin
-				if (!all_channels_done)
+				if (!all_channels_done && !advance_channel)
 				begin
 					row_base_addr <= channel_base_addr;
 					row_number   <= {IMAGE_SIZE_BITS{1'b0}};
 					load_row     <= 1'b1;
+					is_pad_row <= 1'b1; // Row 0 is always a pad row
 				end
 			end
 
@@ -158,7 +159,7 @@ begin
 					if (row_number != 2)
 					begin
 						load_row <= 1'b1;
-						if (!is_pad_row)
+						if (!current_is_pad)
 							row_base_addr <= next_row_base_addr;
 					end
 				end
@@ -173,7 +174,8 @@ begin
 					if (row_number != rows_per_channel)
 					begin
 						load_row <= 1'b1;
-						if (!is_pad_row)
+						is_pad_row <= (row_number == rows_per_channel - 1);
+						if (!current_is_pad)
 							row_base_addr <= next_row_base_addr;
 					end
 				    	else
@@ -183,10 +185,13 @@ begin
 
 			SHIFT_ROWS:
 			begin
-				line0 <= line1;
-				line1 <= line2;
-				line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-				row_number <= row_number + 1'b1;
+				if (row_load_done)
+				begin
+					line0 <= line1;
+					line1 <= line2;
+					line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
+					row_number <= row_number + 1'b1;
+				end
 			end
 
 			FINISH:
@@ -211,14 +216,21 @@ begin
 	case (state)
 		IDLE:
 		begin
-			if (start)
+			if (channel_start)
 				next = CHANNEL_SETUP;
 			else
 				next = IDLE;
 		end
 
 		CHANNEL_SETUP:
-			next = all_channels_done ? FINISH : LOAD_ROW;
+		begin
+			if (advance_channel)
+				next = CHANNEL_SETUP;
+			else if (all_channels_done)
+				next = FINISH;
+			else
+				next = LOAD_ROW;
+		end
 
 		LOAD_ROW:
 			next = (row_number == 8'd2 && row_load_done) ? WAIT_FOR_CONV : LOAD_ROW;
@@ -248,9 +260,9 @@ end
 //-------------------------//
 // Continuous Assignments  //
 //-------------------------//
-assign rows_per_channel  = {1'b0, image_size} + 8'd2;
+assign rows_per_channel  = {1'b0, image_size} + 7'd2; // 2 extra rows for padding
 assign row_stride        = WORDS_PER_ROW * 4;
 assign next_row_base_addr = row_base_addr + row_stride;
-assign is_pad_row    = (row_number == {IMAGE_SIZE_BITS{1'b0}}) || (row_number == rows_per_channel - 8'd1);
+assign current_is_pad    = (row_number == 0) || (row_number == rows_per_channel - 1);
 
 endmodule

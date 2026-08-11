@@ -2,31 +2,14 @@
 
 //////////////////////////////////////////////////////////////////////////////////
 // Engineer: Shashank Tiwari, Vishal V, Sameeksha
-// Update Date: 22.06.2026
-// Pipelined   : 16.07.2026 - the 9-way signed multiply + 9-way add used to
-//               happen entirely combinationally in one cycle (only the final
-//               sum was ever registered), which put 14 logic levels /
-//               ~11.6ns on the path into y - too deep for a 10ns (100MHz)
-//               budget. Fixed by actually registering the 9 products
-//               (m0..m8) on one clock edge, then summing the REGISTERED
-//               values into y on the next edge - two shorter stages instead
-//               of one long one.
-//
-//               Consequence: y is now valid 2 cycles after a0..a8/w0..w8
-//               change, not 1. mac_parallel.v's mac_valid generation was
-//               updated to add a matching extra cycle of delay so it still
-//               lines up with when y is actually ready - see mac_parallel.v.
-//
-//               NOTE: the [15:0] width of value/y is UNCHANGED here on
-//               purpose - the overflow-margin fix (widening the internal
-//               sum and saturating) is a separate, deliberately deferred
-//               change, not part of this pass.
+// Update Date: 22.06.2027
 // Module Name: mac_unit.v
 // Project Name: CNN Summer
 // Description:
 // Single MAC Unit, allows use of signed weights and inputs. Option
 // available in code for direct weights allocaion via parameters or weights value
-// to be taken in from inputs.
+// to be taken in from inputs. Also implements ReLU activation function on the \
+// output of the MAC unit.
 ////////////////////////////////////////////////////////////////////////////////////
 
 // `define DIRECT_WEIGHTS
@@ -62,10 +45,15 @@ wire signed [8:0] a6_s = {1'b0,a6};
 wire signed [8:0] a7_s = {1'b0,a7};
 wire signed [8:0] a8_s = {1'b0,a8};
 
-//---------------------------------------//
-// Stage 1: Multiplication (combinational)//
-//---------------------------------------//
+//-----------------------------------------//
+// Stage 1: Multiplication (combinational) //
+//-----------------------------------------//
 reg signed [12:0] m0,m1,m2,m3,m4,m5,m6,m7,m8;
+
+//------------------------------------------------------//
+// Internal Registers to hold the products from Stage 1 //
+//------------------------------------------------------//
+reg signed [12:0] m0_r,m1_r,m2_r,m3_r,m4_r,m5_r,m6_r,m7_r,m8_r;
 
 always@(*)
 begin
@@ -79,9 +67,6 @@ begin
 	m7 = a7_s * $signed(w7);
 	m8 = a8_s * $signed(w8);
 end
-
-//---------------------------------------------------//
-reg signed [12:0] m0_r,m1_r,m2_r,m3_r,m4_r,m5_r,m6_r,m7_r,m8_r;
 
 always @(posedge clk)
 begin
@@ -104,19 +89,19 @@ wire signed [15:0] value;
 assign value = m0_r + m1_r + m2_r + m3_r + m4_r + m5_r + m6_r + m7_r + m8_r;
 
 
-//// RELU/////
-always @(posedge clk) 
+//------//
+// RELU //
+//------//
+always @(posedge clk)
 begin
-	if(!resetn) begin
+	if(!resetn)
 		y <= 0;
-	end else begin
-		if (value[15] == 1'b1) 
-		begin			
-			y <= 0;  
-		end else 
-		begin
-			y <= value;        // If positive, pass through cleanly
-		end
+	else
+	begin
+		if (value[15] == 1'b1)
+			y <= 0;
+		else
+			y <= value;
 	end
 end
 

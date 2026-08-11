@@ -1,24 +1,25 @@
 `timescale 1ns / 1ps
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 // Engineer: Anagha Saraswathy
-// Last Modified: 23.07.2026
+// Last Modified: 29.07.2026
 // Module Name: row_loader_fsm
 // Project Name: cnn hardware accelerator
 // Description:
-// Fetches a word at a time from BRAM IP and fills it till the chosen width of the image. Fills only 1 row of the image
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Fetches a word at a time from BRAM IP and fills it till the chosen width of the image.
+// Fills only 1 row of the image. Uses a dedicated DONE state to prevent routing skew.
+///////////////////////////////////////////////////////////////////////////////////////////
 
 module row_loader_fsm
 #(
 	parameter ROW_DATA_WIDTH = 256   // words_per_row(max) * WORD_WIDTH
 )(
-	// from loop_ctrl_fsm
+	// from row_ctrl_fsm
 	input  wire                      clk,
 	input  wire                      resetn,
 	input  wire                      load_row,
 	input  wire                      is_pad_row,
-	input  wire [31:0]               image_base_addr,
+	input  wire [31:0]               row_base_addr,
 
 	// from store_fsm
 	input  wire                      store_halt,
@@ -31,7 +32,7 @@ module row_loader_fsm
 	output reg                       bram_image_valid,
 	output reg [31:0]                bram_image_raddr,
 
-	// to loop_ctrl_fsm
+	// to row_ctrl_fsm
 	output reg  [ROW_DATA_WIDTH-1:0] row_data,
 	output reg                       row_load_done
 );
@@ -39,11 +40,12 @@ module row_loader_fsm
 //-----------------------------//
 // parameters for FSM states   //
 //-----------------------------//
-localparam [1:0]
-	IDLE    = 2'd0,
-	PAD     = 2'd1,
-	CALC_ADDR = 2'd2,
-	CAPTURE = 2'd3;
+localparam [2:0]
+	IDLE      = 3'd0,
+	PAD       = 3'd1,
+	CALC_ADDR = 3'd2,
+	CAPTURE   = 3'd3,
+	DONE      = 3'd4;
 
 /*
  * BRAM IP width is set to 32 bits hence WORDS_PER_ROW can be derived
@@ -52,10 +54,11 @@ localparam WORDS_PER_ROW = ROW_DATA_WIDTH / 32;
 
 localparam WORD_CNT_BITS = $clog2(WORDS_PER_ROW);
 
-//----------------------//
-// Next State Registers //
-//----------------------//
-reg [1:0] state, next;
+//--------------------------------//
+// Next state logic and registers //
+//--------------------------------//
+reg [2:0] state, next;
+
 
 reg [WORD_CNT_BITS - 1:0] word_count;
 
@@ -111,10 +114,7 @@ begin
 			end
 
 			PAD:
-			begin
 				row_data <= {ROW_DATA_WIDTH{1'b0}};
-				row_load_done <= 1'b1;
-			end
 
 			CALC_ADDR:
 			begin
@@ -151,11 +151,20 @@ begin
 
 				if(word_count == WORDS_PER_ROW - 1)
 				begin
-					row_load_done <= 1'b1;
 					word_count <= {WORD_CNT_BITS{1'b0}};
 				end
 				else
 					word_count <= word_count + 1'b1;
+			end
+
+			DONE:
+			begin
+				/*
+				 * row_load_done asserted exclusively in the DONE state to avoid routing skew issues.
+				 * This ensure that row_data is fully captured before row_load_done is asserted.
+				 * This is important because row_load_done is used to trigger the next state in row_ctrl_fsm
+				 */
+				row_load_done <= 1'b1;
 			end
 		endcase
 	end
@@ -181,8 +190,9 @@ begin
 			else
 				next = IDLE;
 		end
+
 		PAD:
-			next = IDLE; // row_data cleared, done pulses this cycle
+			next = DONE;
 
 		CALC_ADDR:
 		begin
@@ -195,10 +205,13 @@ begin
 		CAPTURE:
 		begin
 			if (word_count == WORDS_PER_ROW - 1)
-				next = IDLE;
+				next = DONE;
 			else
 				next = CALC_ADDR;
 		end
+
+		DONE:
+			next = IDLE;
 
 		default:
 			next = IDLE;
@@ -210,6 +223,6 @@ end
  * row_base_addr is loop_ctrl_fsm's cur_row_addr passed straight through,
  * word_count steps it one word at a time within the row.
  */
-assign next_bram_image_raddr = image_base_addr + ({28'd0, word_count} << 2);
+assign next_bram_image_raddr = row_base_addr + ({28'd0, word_count} << 2);
 
 endmodule

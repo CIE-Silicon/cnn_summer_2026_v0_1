@@ -21,7 +21,7 @@ module weight_loader_fsm
 
 	// from picoRV32
 	input  wire        weight_load_start,
-	input  wire [31:0] base_address,
+	input  wire [31:0] weight_base_addr,
 	input  wire [6:0]  num_kernels,
 
 	// from BRAM port B
@@ -63,7 +63,7 @@ localparam [2:0] KERNEL_CNT_BITS = $clog2(ROWS_PER_WT);
 reg [1:0] state, next;
 
 /*
- * This register takes the value from input base_address and is captured
+ * This register takes the value from input weight_base_addr and is captured
  * when weight_load_start is high. It is used to calculate the BRAM read
  * address for each weight.
  */
@@ -134,7 +134,7 @@ begin
 
 				if (weight_load_start)
 				begin
-					base_addr_r <= base_address;
+					base_addr_r <= weight_base_addr;
 					mac_weight_valid <= 1'b0;
 				end
 			end
@@ -202,7 +202,8 @@ begin
 
 						/*
 						 * Set mac_weight_valid to 1 to indicate that all weights have been loaded.
-						 * This signal is latched and will remain high until the next weight load starts.
+						 * This is a single-cycle pulse at the top of this always block deasserts
+						 * it the very next cycle.
 						 */
 						mac_weight_valid <= 1'b1;
 					end
