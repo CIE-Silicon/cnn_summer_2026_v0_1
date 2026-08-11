@@ -3,10 +3,10 @@
 // Design Name: picorv32 with DSQ module
 // Module Name: picorv32
 // Target Devices: Basys 3
-// Description: DSQ has been integrated using the PCPI interface. 
+// Description: DSQ has been integrated using the PCPI interface.
 //              In order to use the custom instruction "DSQ" set ENABLE_PCPI, ENABLE_DSQ to 1.
 // Author : Omkar, Lasya (Responsible for integrating DSQ with picorv32)
- 
+
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -169,7 +169,7 @@ module picorv32 #(
 	// Trace Interface
 	output reg        trace_valid,
 	output reg [35:0] trace_data,
-	
+
 	output wire        image_start,
 	output wire        weight_start,
 	output wire [31:0] image_base_addr,
@@ -178,8 +178,8 @@ module picorv32 #(
 	output wire [6:0]  num_featuremaps,
 	output wire [6:0]  num_channels,
 	output wire [6:0]  image_size,
-	input  wire        image_load_ready,
-	input  wire        weight_load_ready
+	input  wire        done,
+	input  wire        mac_weight_valid
 );
 	localparam integer irq_timer = 0;
 	localparam integer irq_ebreak = 1;
@@ -290,7 +290,7 @@ module picorv32 #(
 	wire [31:0] pcpi_dsq_rd;
 	wire        pcpi_dsq_wait;
 	wire        pcpi_dsq_ready;
-	
+
     wire        pcpi_cnn_wr;
     wire [31:0] pcpi_cnn_rd;
     wire        pcpi_cnn_wait;
@@ -302,9 +302,9 @@ module picorv32 #(
     wire [31:0] pcpi_cnn_dest_base_addr;
     wire [6:0]  pcpi_cnn_num_featuremaps;
     wire [6:0]  pcpi_cnn_num_channels;
-    wire [6:0]  pcpi_cnn_image_size; 
+    wire [6:0]  pcpi_cnn_image_size;
 	reg        pcpi_int_wr;
-	
+
 	reg [31:0] pcpi_int_rd;
 	reg        pcpi_int_wait;
 	reg        pcpi_int_ready;
@@ -381,7 +381,7 @@ module picorv32 #(
 		assign pcpi_dsq_wait  = 0;
 		assign pcpi_dsq_ready = 0;
 	end endgenerate
-	
+
    generate if (ENABLE_CNN) begin :gen_cnn
 		picorv32_pcpi_cnn pcpi_cnn (
 			.clk              (clk                       ),
@@ -390,8 +390,8 @@ module picorv32 #(
 			.pcpi_insn        (pcpi_insn                 ),
 			.pcpi_rs1         (pcpi_rs1                  ),
 			.pcpi_rs2         (pcpi_rs2                  ),
-			.weight_load_ready(weight_load_ready         ),
-			.image_load_ready  (image_load_ready          ),
+			.mac_weight_valid (mac_weight_valid          ),
+			.done             (done                      ),
 			.pcpi_wr          (pcpi_cnn_wr               ),
 			.pcpi_rd          (pcpi_cnn_rd               ),
 			.pcpi_wait        (pcpi_cnn_wait             ),
@@ -419,7 +419,7 @@ module picorv32 #(
 		assign pcpi_cnn_num_channels     = 7'd0;
 		assign pcpi_cnn_image_size       = 7'd0;
 	end endgenerate
-	
+
 
 	// CNN signals routed to top-level ports
 	assign image_start      = pcpi_cnn_image_start;
@@ -430,8 +430,8 @@ module picorv32 #(
 	assign num_featuremaps  = pcpi_cnn_num_featuremaps;
 	assign num_channels     = pcpi_cnn_num_channels;
 	assign image_size       = pcpi_cnn_image_size;
-	
-	
+
+
 	always @* begin
 		pcpi_int_wr = 0;
 		pcpi_int_rd = 32'bx;
@@ -2700,7 +2700,7 @@ endmodule
     	    pcpi_wait  <= 0;
     	    pcpi_ready <= 0;
     	    seen       <= 0;
-    	end 
+    	end
     	else begin
     	    // Default outputs
     	    pcpi_wr    <= 0;
@@ -2784,7 +2784,7 @@ module picorv32_pcpi_dsq (
     	    pcpi_wait  <= 0;
     	    pcpi_ready <= 0;
     	    seen       <= 0;
-    	end 
+    	end
     	else begin
     	    // Default outputs
     	    pcpi_wr    <= 0;
@@ -2841,8 +2841,8 @@ module picorv32_pcpi_cnn
 	input      [31:0]  pcpi_rs2,
 
 	// From real FSMs
-	input  wire        weight_load_ready,
-	input  wire        image_load_ready,
+	input  wire        mac_weight_valid,
+	input  wire        done,
 
 	// PCPI bus outputs
 	output wire        pcpi_wr,
@@ -2891,7 +2891,7 @@ begin
 	begin
 		if (CNN_LD_WT && !wt_stall_active)
 			wt_stall_active <= 1'b1;
-		if (weight_load_ready)
+		if (mac_weight_valid)
 			wt_stall_active <= 1'b0;
 	end
 end
@@ -2907,7 +2907,7 @@ begin
 	begin
 		if (CNN_LD_IMG && !img_stall_active)
 			img_stall_active <= 1'b1;
-		if (image_load_ready)
+		if (done)
 			img_stall_active <= 1'b0;
 	end
 end
@@ -2986,8 +2986,8 @@ begin
 		pcpi_wait <= 1'b0;
 		pcpi_rd   <= 32'd0;
 
-		if ((CNN_LD_WT  && !weight_load_ready) ||
-		    (CNN_LD_IMG && !image_load_ready))
+		if ((CNN_LD_WT  && !mac_weight_valid) ||
+		    (CNN_LD_IMG && !done))
 			pcpi_wait <= 1'b1;
 	end
 end
@@ -2999,8 +2999,8 @@ assign instr_cnn  = pcpi_valid && (pcpi_insn[6:0]   == 7'b0101011);
 assign CNN_LD_WT  = instr_cnn  && (pcpi_insn[14:12] == 3'b000);
 assign CNN_LD_IMG = instr_cnn  && (pcpi_insn[14:12] == 3'b001);
 
-assign pcpi_ready = (CNN_LD_WT  && weight_load_ready) ||
-                    (CNN_LD_IMG && image_load_ready);
+assign pcpi_ready = (CNN_LD_WT  && mac_weight_valid) ||
+                    (CNN_LD_IMG && done);
 assign pcpi_wr    = pcpi_ready;
 
 endmodule
