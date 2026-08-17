@@ -99,14 +99,14 @@ begin
 
 	if (bram_weight_valid && !bram_weight_ready)
 	begin
-		addrb = bram_weight_raddr;
+		addrb = bram_weight_raddr  ;
 		enb = 1'b1;
 		web = 1'b0; // weight_loader_fsm never writes to BRAM
 		next_bram_weight_ready = 1'b1;
 	end
 	else if (bram_store_valid && !bram_store_ready)
 	begin
-		addrb = bram_store_waddr;
+		addrb = bram_store_waddr ;
 		enb = 1'b1;
 		web = bram_store_wen;
 		dinb = bram_store_wdata;
@@ -114,7 +114,7 @@ begin
 	end
 	else if (bram_image_valid && !bram_image_ready)
 	begin
-		addrb = bram_image_raddr;
+		addrb = bram_image_raddr ;
 		enb = 1'b1;
 		web = 1'b0; // image_loader_fsm never writes to BRAM'
 		next_bram_image_ready = 1'b1;

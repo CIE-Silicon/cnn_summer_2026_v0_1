@@ -69,7 +69,7 @@ wire [31:0] bram_weight_rdata;
 
 wire        bram_store_valid;
 wire        bram_store_wen;
-wire [33:0] bram_store_waddr;
+wire [31:0] bram_store_waddr;
 wire [31:0] bram_store_wdata;
 wire        bram_store_ready;
 

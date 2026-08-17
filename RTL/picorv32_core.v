@@ -308,7 +308,7 @@ module picorv32_core #(
 		.trace_valid(trace_valid),
 		.trace_data (trace_data),
 		.image_start (cnn_image_start),
-		.weight_load_start (cnn_weight_start),
+		.weight_start (cnn_weight_start),
 		.image_base_addr (cnn_image_base_addr),
 		.weight_base_addr (cnn_weight_base_addr),
 		.dest_base_addr (cnn_dest_base_addr),
