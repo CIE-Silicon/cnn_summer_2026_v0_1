@@ -2,8 +2,6 @@
 # Ignore the entire work directory where the project is built
 work/
 
-project_1/
-
 # Ignore auto-generated log and journal files
 *.log
 *.jou

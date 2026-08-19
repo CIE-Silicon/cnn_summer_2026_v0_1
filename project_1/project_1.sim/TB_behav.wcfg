@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="TB_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="TB" />
+            <top_module name="axi_bram_ctrl_funcs" />
+            <top_module name="comp_defs" />
+            <top_module name="glbl" />
+            <top_module name="ipif_pkg" />
+            <top_module name="vcomponents" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="41,979,855.500 ns"></ZoomStartTime>
+      <ZoomEndTime time="41,979,912.501 ns"></ZoomEndTime>
+      <Cursor1Time time="41,979,865.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="299"></NameColumnWidth>
+      <ValueColumnWidth column_width="281"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="64" />
+   <wvobject fp_name="/TB/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/reset_0" type="logic">
+      <obj_property name="ElementShortName">reset_0</obj_property>
+      <obj_property name="ObjectShortName">reset_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/uart_tx" type="logic">
+      <obj_property name="ElementShortName">uart_tx</obj_property>
+      <obj_property name="ObjectShortName">uart_tx</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/uart_rx" type="logic">
+      <obj_property name="ElementShortName">uart_rx</obj_property>
+      <obj_property name="ObjectShortName">uart_rx</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/fio0" type="logic">
+      <obj_property name="ElementShortName">fio0</obj_property>
+      <obj_property name="ObjectShortName">fio0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/fio1" type="logic">
+      <obj_property name="ElementShortName">fio1</obj_property>
+      <obj_property name="ObjectShortName">fio1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/fio2" type="logic">
+      <obj_property name="ElementShortName">fio2</obj_property>
+      <obj_property name="ObjectShortName">fio2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/fio3" type="logic">
+      <obj_property name="ElementShortName">fio3</obj_property>
+      <obj_property name="ObjectShortName">fio3</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/CS" type="logic">
+      <obj_property name="ElementShortName">CS</obj_property>
+      <obj_property name="ObjectShortName">CS</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/trap" type="logic">
+      <obj_property name="ElementShortName">trap</obj_property>
+      <obj_property name="ObjectShortName">trap</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_valid" type="logic">
+      <obj_property name="ElementShortName">mem_valid</obj_property>
+      <obj_property name="ObjectShortName">mem_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_instr" type="logic">
+      <obj_property name="ElementShortName">mem_instr</obj_property>
+      <obj_property name="ObjectShortName">mem_instr</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_ready" type="logic">
+      <obj_property name="ElementShortName">mem_ready</obj_property>
+      <obj_property name="ObjectShortName">mem_ready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_addr" type="array">
+      <obj_property name="ElementShortName">mem_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_wdata" type="array">
+      <obj_property name="ElementShortName">mem_wdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_wdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_wstrb" type="array">
+      <obj_property name="ElementShortName">mem_wstrb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_wstrb[3:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/pico_core/mem_rdata" type="array">
+      <obj_property name="ElementShortName">mem_rdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_rdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/gpio_io_o_0" type="array">
+      <obj_property name="ElementShortName">gpio_io_o_0[3:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_io_o_0[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/recv_data" type="array">
+      <obj_property name="ElementShortName">recv_data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">recv_data[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/data_valid_rcv" type="logic">
+      <obj_property name="ElementShortName">data_valid_rcv</obj_property>
+      <obj_property name="ObjectShortName">data_valid_rcv</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/tdevice_PU" type="array">
+      <obj_property name="ElementShortName">tdevice_PU[31:0]</obj_property>
+      <obj_property name="ObjectShortName">tdevice_PU[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/ena" type="logic">
+      <obj_property name="ElementShortName">ena</obj_property>
+      <obj_property name="ObjectShortName">ena</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/wea" type="array">
+      <obj_property name="ElementShortName">wea[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wea[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/addra" type="array">
+      <obj_property name="ElementShortName">addra[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addra[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/douta" type="array">
+      <obj_property name="ElementShortName">douta[31:0]</obj_property>
+      <obj_property name="ObjectShortName">douta[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/doutb" type="array">
+      <obj_property name="ElementShortName">doutb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">doutb[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/image_en" type="logic">
+      <obj_property name="ElementShortName">image_en</obj_property>
+      <obj_property name="ObjectShortName">image_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/line0" type="array">
+      <obj_property name="ElementShortName">line0[271:0]</obj_property>
+      <obj_property name="ObjectShortName">line0[271:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/line1" type="array">
+      <obj_property name="ElementShortName">line1[271:0]</obj_property>
+      <obj_property name="ObjectShortName">line1[271:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/buffer_valid" type="logic">
+      <obj_property name="ElementShortName">buffer_valid</obj_property>
+      <obj_property name="ObjectShortName">buffer_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/done" type="logic">
+      <obj_property name="ElementShortName">done</obj_property>
+      <obj_property name="ObjectShortName">done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/window_valid" type="logic">
+      <obj_property name="ElementShortName">window_valid</obj_property>
+      <obj_property name="ObjectShortName">window_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a0" type="array">
+      <obj_property name="ElementShortName">a0[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a0[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a1" type="array">
+      <obj_property name="ElementShortName">a1[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a1[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a2" type="array">
+      <obj_property name="ElementShortName">a2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a2[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a3" type="array">
+      <obj_property name="ElementShortName">a3[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a3[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a4" type="array">
+      <obj_property name="ElementShortName">a4[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a4[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a5" type="array">
+      <obj_property name="ElementShortName">a5[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a5[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a6" type="array">
+      <obj_property name="ElementShortName">a6[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a6[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a7" type="array">
+      <obj_property name="ElementShortName">a7[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a7[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_window_generator/a8" type="array">
+      <obj_property name="ElementShortName">a8[7:0]</obj_property>
+      <obj_property name="ObjectShortName">a8[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w0" type="array">
+      <obj_property name="ElementShortName">w0[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w0[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w1" type="array">
+      <obj_property name="ElementShortName">w1[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w1[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w2" type="array">
+      <obj_property name="ElementShortName">w2[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w2[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w3" type="array">
+      <obj_property name="ElementShortName">w3[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w3[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w4" type="array">
+      <obj_property name="ElementShortName">w4[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w4[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w5" type="array">
+      <obj_property name="ElementShortName">w5[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w5[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w6" type="array">
+      <obj_property name="ElementShortName">w6[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w6[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w7" type="array">
+      <obj_property name="ElementShortName">w7[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w7[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/w8" type="array">
+      <obj_property name="ElementShortName">w8[63:0]</obj_property>
+      <obj_property name="ObjectShortName">w8[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/y" type="array">
+      <obj_property name="ElementShortName">y[255:0]</obj_property>
+      <obj_property name="ObjectShortName">y[255:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/mac_valid" type="logic">
+      <obj_property name="ElementShortName">mac_valid</obj_property>
+      <obj_property name="ObjectShortName">mac_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/weight_valid" type="logic">
+      <obj_property name="ElementShortName">weight_valid</obj_property>
+      <obj_property name="ObjectShortName">weight_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/mac_valid" type="logic">
+      <obj_property name="ElementShortName">mac_valid</obj_property>
+      <obj_property name="ObjectShortName">mac_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/y" type="array">
+      <obj_property name="ElementShortName">y[255:0]</obj_property>
+      <obj_property name="ObjectShortName">y[255:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/ena" type="logic">
+      <obj_property name="ElementShortName">ena</obj_property>
+      <obj_property name="ObjectShortName">ena</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/wea" type="logic">
+      <obj_property name="ElementShortName">wea</obj_property>
+      <obj_property name="ObjectShortName">wea</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/addra" type="array">
+      <obj_property name="ElementShortName">addra[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addra[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/store_halt" type="logic">
+      <obj_property name="ElementShortName">store_halt</obj_property>
+      <obj_property name="ObjectShortName">store_halt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_store_fsm/dina" type="array">
+      <obj_property name="ElementShortName">dina[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dina[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/bram_addr" type="array">
+      <obj_property name="ElementShortName">bram_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_addr[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_mac_parallel/window_valid" type="logic">
+      <obj_property name="ElementShortName">window_valid</obj_property>
+      <obj_property name="ObjectShortName">window_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/picorv32_core_0/inst/u_cnn_coprocessor_wrapper/u_image_loader_fsm/line2" type="array">
+      <obj_property name="ElementShortName">line2[271:0]</obj_property>
+      <obj_property name="ObjectShortName">line2[271:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/TB/dut/design_1_i/blk_mem_gen_0/addrb" type="array">
+      <obj_property name="ElementShortName">addrb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addrb[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>
