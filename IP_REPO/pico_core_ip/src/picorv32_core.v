@@ -1,51 +1,22 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company:
+// Company: 
 // Engineer: Rakesh P
-//
+// 
 // Create Date: 10/20/2025 10:37:38 PM
-// Design Name:
+// Design Name: 
 // Module Name: picorv32_core
-// Project Name:
-// Target Devices:
-// Tool Versions:
-// Description:
-//
-// Dependencies:
-//
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
 // Revision:
 // Revision 0.01 - File Created
-// Revision 0.02 - Student 2 (SoC Integration), 06.07.2026:
-//   - Instantiated cnn_coprocessor and wired it to the CNN decoder ports
-//     that were previously left unconnected / tied to constants (see
-//     notes below - this was a real bug, not just a missing feature).
-//   - Added bram_portb_* ports so the CNN coprocessor's shared BRAM
-//     Port B can reach the external dual-port blk_mem_gen_0 in the
-//     top-level block design (Step 5/6 of the SoC integration plan).
-// Revision 0.03 - SoC Integration, 13.07.2026:
-//   - cnn_coprocessor was never a real module - replaced the instance
-//     with cnn_coprocessor_wrapper.v, which instantiates the
-//     coprocessor team's own bram_arbiter / weight_loader_fsm /
-//     image_loader_fsm / window_generator / mac_parallel / store_fsm
-//     files unmodified, driving the shared BRAM's Port B instead of
-//     owning a private BRAM (that private-BRAM version stays in
-//     cnn_accelerator_wrapper.v for the coprocessor team's own
-//     standalone testing, untouched).
-//
 // Additional Comments:
-//   IMPORTANT - bug found in the CNN wiring prior to this revision:
-//     .image_load_ready (1'b0),
-//     .weight_load_ready(1'b0)
-//   were hardcoded to constant 0. Per picorv32_pcpi_cnn.v, pcpi_wait is
-//   held high as long as (CNN_LD_WT && !weight_load_ready) ||
-//   (CNN_LD_IMG && !image_load_ready). With these tied permanently low,
-//   the CPU would stall forever - hang - the instant it executed either
-//   CNN_LD_WT or CNN_LD_IMG. This revision replaces those ties with the
-//   real ready signals from cnn_coprocessor_wrapper. Also note:
-//   `image_size` was missing entirely from the picorv32 port connection
-//   list before this revision (not just blank - absent), so it was
-//   silently left floating; it is now connected too.
-//
+// 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -65,7 +36,6 @@ module picorv32_core #(
 	parameter [ 0:0] CATCH_ILLINSN = 1,
 	parameter [ 0:0] ENABLE_PCPI = 1,
 	parameter [ 0:0] ENABLE_DSQ = 1,
-	parameter [ 0:0] ENABLE_CNN = 1,
 	parameter [ 0:0] ENABLE_MUL = 1,
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
@@ -145,20 +115,7 @@ module picorv32_core #(
 
 	// Trace Interface
 	output        trace_valid,
-	output [35:0] trace_data,
-
-	// -----------------------------------------------------------------
-	// CNN co-processor shared BRAM - Port B (added Step 3 / 06.07.2026)
-	// Drives the second port of the (to-be-made-dual-port) external
-	// blk_mem_gen_0 in the top-level block design. This is a SEPARATE
-	// physical port from the mem_axi_*/PCPI path above - it does not
-	// go through picorv32_axi_adapter or the internal BootROM bram.
-	// -----------------------------------------------------------------
-	output [31:0] bram_portb_addr,  // widened to 32 bits (top 20 bits always 0) to match blk_mem_gen_0's addrb[31:0] directly
-	output        bram_portb_en,
-	output [ 3:0] bram_portb_we,
-	output [31:0] bram_portb_din,
-	input  [31:0] bram_portb_dout
+	output [35:0] trace_data
 );
 	wire        temp_mem_valid;
 	wire [31:0] temp_mem_addr;
@@ -167,31 +124,18 @@ module picorv32_core #(
 	wire        temp_mem_instr;
 	wire        temp_mem_ready;
 	wire [31:0] temp_mem_rdata;
-
-
-
-	wire mem_valid, mem_instr;
+	
+	
+	
+	wire mem_valid, mem_instr;     
     reg mem_ready  ;
 	wire [31:0]mem_addr,mem_wdata ;
 	wire [3:0]mem_wstrb;
+		      
+	reg [31:0]mem_rdata  ; 
 
-	reg [31:0]mem_rdata  ;
-
-	// -----------------------------------------------------------------
-	// CNN decoder <-> cnn_coprocessor_wrapper wiring (added Step 3 / 06.07.2026)
-	// -----------------------------------------------------------------
-	wire        cnn_image_start;
-	wire        cnn_weight_start;
-	wire [31:0] cnn_image_base_addr;
-	wire [31:0] cnn_weight_base_addr;
-	wire [31:0] cnn_dest_base_addr;
-	wire [6:0]  cnn_num_featuremaps;
-	wire [6:0]  cnn_num_channels;
-	wire [6:0]  cnn_image_size;
-	wire        cnn_weight_load_ready;
-	wire        cnn_image_load_ready;
-
-
+	
+	
 
 	picorv32_axi_adapter axi_adapter (
 		.clk            (clk            ),
@@ -237,7 +181,6 @@ module picorv32_core #(
 		.CATCH_ILLINSN       (CATCH_ILLINSN       ),
 		.ENABLE_PCPI         (ENABLE_PCPI         ),
 		.ENABLE_DSQ          (ENABLE_DSQ          ),
-		.ENABLE_CNN          (ENABLE_CNN          ),
 		.ENABLE_MUL          (ENABLE_MUL          ),
 		.ENABLE_FAST_MUL     (ENABLE_FAST_MUL     ),
 		.ENABLE_DIV          (ENABLE_DIV          ),
@@ -299,60 +242,14 @@ module picorv32_core #(
 `endif
 
 		.trace_valid(trace_valid),
-		.trace_data (trace_data),
-
-		// --- CNN decoder ports: previously blank / tied to 1'b0, now
-		//     wired to the real cnn_coprocessor_wrapper instance below.
-		//     Also added .image_size, which was missing entirely before. ---
-		.image_start      (cnn_image_start      ),
-		.weight_start     (cnn_weight_start     ),
-		.image_base_addr  (cnn_image_base_addr  ),
-		.weight_base_addr (cnn_weight_base_addr ),
-		.dest_base_addr   (cnn_dest_base_addr   ),
-		.num_featuremaps  (cnn_num_featuremaps  ),
-		.num_channels     (cnn_num_channels     ),
-		.image_size       (cnn_image_size       ),
-		.image_load_ready (cnn_image_load_ready ),
-		.weight_load_ready(cnn_weight_load_ready)
+		.trace_data (trace_data)
 	);
 
-	// -----------------------------------------------------------------
-	// CNN co-processor wrapper (revised - cnn_coprocessor was never a
-	// real module; replaced with cnn_coprocessor_wrapper.v, which
-	// instantiates the coprocessor team's own bram_arbiter /
-	// weight_loader_fsm / image_loader_fsm / window_generator /
-	// mac_parallel / store_fsm files unmodified. Unlike
-	// cnn_accelerator_wrapper.v (which owns a private BRAM for
-	// standalone testing), this wrapper has no internal BRAM - it
-	// drives the shared BRAM's Port B directly via bram_portb_*.
-	// -----------------------------------------------------------------
-	cnn_coprocessor_wrapper u_cnn_coprocessor_wrapper (
-		.clk               (clk),
-		.resetn            (resetn),
-
-		.weight_start      (cnn_weight_start),
-		.image_start       (cnn_image_start),
-		.weight_base_addr  (cnn_weight_base_addr),
-		.image_base_addr   (cnn_image_base_addr),
-		.dest_base_addr    (cnn_dest_base_addr),
-		.num_featuremaps   (cnn_num_featuremaps),
-		.num_channels      (cnn_num_channels),
-		.image_size        (cnn_image_size),
-
-		.weight_load_ready (cnn_weight_load_ready),
-		.image_load_ready  (cnn_image_load_ready),
-
-		.bram_portb_addr   (bram_portb_addr),
-		.bram_portb_en     (bram_portb_en),
-		.bram_portb_we     (bram_portb_we),
-		.bram_portb_din    (bram_portb_din),
-		.bram_portb_dout   (bram_portb_dout)
-	);
 
 localparam MEM_SIZE=32'h00004000;
+    
 
-
-    reg m_read_en;
+    reg m_read_en;   
 
 
     //Bram signlas
@@ -361,8 +258,8 @@ reg [3:0] w_en; // w_en<=mem_wstrb
 wire [31:0] B_mem_rdata;
 reg [31:0]B_mem_rdata_latched; //to add one clk cycle delay
 wire bram_valid = mem_valid;
-reg bram_valid_r;
-
+reg bram_valid_r; 
+    
 
         always@(*)
 		begin
@@ -371,13 +268,13 @@ reg bram_valid_r;
             begin
                 //BRAM logic;
 
-            if (!resetn)
+            if (!resetn) 
             begin
-            B_mem_rdata_latched <= 0;
+            B_mem_rdata_latched <= 0;    
             m_read_en <= 0;
             w_en <= 0;
-            end
-            else
+            end 
+            else 
             begin
             // Default assignments
             m_read_en <= 0;
@@ -388,22 +285,22 @@ reg bram_valid_r;
             w_en <= mem_wstrb;
             end
             //bram sync
-            mem_ready <= bram_valid_r || (mem_valid && !bram_valid);
+            mem_ready <= bram_valid_r || (mem_valid && !bram_valid); 
             mem_rdata <= bram_valid_r ? B_mem_rdata :32'h000000000; // removed 32'h0
-
+    
             end
 
             end
 
-            //use axi
-            else
+            //use axi 
+            else 
             begin
                 //temp_mem_valid=mem_valid;
-                //temp_mem_instr =   mem_instr;
-		        mem_ready<=temp_mem_ready ;
+                //temp_mem_instr =   mem_instr; 
+		        mem_ready<=temp_mem_ready ;                
 		        mem_rdata<=temp_mem_rdata;
             end
-        end
+        end       
 /*assign temp_mem_valid=(mem_addr==32'd100)?mem_valid:temp_mem_valid;
 assign temp_mem_instr=(mem_addr==32'd100)?mem_instr:temp_mem_instr;
 assign temp_mem_addr=(mem_addr==32'd100)?mem_addr:temp_mem_addr;
@@ -416,13 +313,13 @@ assign temp_mem_addr=mem_addr;
 assign temp_mem_wdata=mem_wdata  ;
 assign temp_mem_wstrb=mem_wstrb;
 
-         always @(posedge clk or negedge resetn)
+         always @(posedge clk or negedge resetn) 
     begin
-        if (!resetn)
+        if (!resetn) 
         begin
             bram_valid_r <= 1'b0;
-        end
-        else begin
+        end 
+        else begin            
             bram_valid_r <= bram_valid;
         end
     end
@@ -438,3 +335,7 @@ assign temp_mem_wstrb=mem_wstrb;
 );
 
 endmodule
+
+
+
+

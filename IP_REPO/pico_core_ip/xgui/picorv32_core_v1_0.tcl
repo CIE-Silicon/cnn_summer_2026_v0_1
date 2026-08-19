@@ -30,8 +30,6 @@ proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "TWO_CYCLE_ALU" -parent ${Page_0}
   ipgui::add_param $IPINST -name "TWO_CYCLE_COMPARE" -parent ${Page_0}
   ipgui::add_param $IPINST -name "TWO_STAGE_SHIFT" -parent ${Page_0}
-  ipgui::add_param $IPINST -name "ENABLE_CNN" -parent ${Page_0}
-  ipgui::add_param $IPINST -name "FREQ_HZ" -parent ${Page_0}
 
 
 }
@@ -69,15 +67,6 @@ proc update_PARAM_VALUE.COMPRESSED_ISA { PARAM_VALUE.COMPRESSED_ISA } {
 
 proc validate_PARAM_VALUE.COMPRESSED_ISA { PARAM_VALUE.COMPRESSED_ISA } {
 	# Procedure called to validate COMPRESSED_ISA
-	return true
-}
-
-proc update_PARAM_VALUE.ENABLE_CNN { PARAM_VALUE.ENABLE_CNN } {
-	# Procedure called to update ENABLE_CNN when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.ENABLE_CNN { PARAM_VALUE.ENABLE_CNN } {
-	# Procedure called to validate ENABLE_CNN
 	return true
 }
 
@@ -431,10 +420,5 @@ proc update_MODELPARAM_VALUE.PROGADDR_IRQ { MODELPARAM_VALUE.PROGADDR_IRQ PARAM_
 proc update_MODELPARAM_VALUE.STACKADDR { MODELPARAM_VALUE.STACKADDR PARAM_VALUE.STACKADDR } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.STACKADDR}] ${MODELPARAM_VALUE.STACKADDR}
-}
-
-proc update_MODELPARAM_VALUE.ENABLE_CNN { MODELPARAM_VALUE.ENABLE_CNN PARAM_VALUE.ENABLE_CNN } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.ENABLE_CNN}] ${MODELPARAM_VALUE.ENABLE_CNN}
 }
 
