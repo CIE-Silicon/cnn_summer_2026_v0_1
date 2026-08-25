@@ -10,59 +10,59 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 module row_ctrl_fsm
 #(
-	parameter ROW_DATA_WIDTH = 256,
-	parameter LINE_PAD_BITS  = 8, // 1 zero byte either side, for 3x3 conv borders
-	parameter LINE_WIDTH = ROW_DATA_WIDTH + 2*LINE_PAD_BITS,
-	parameter IMAGE_SIZE = 32
+        parameter ROW_DATA_WIDTH = 256,
+        parameter LINE_PAD_BITS  = 8, // 1 zero byte either side, for 3x3 conv borders
+        parameter LINE_WIDTH = ROW_DATA_WIDTH + 2*LINE_PAD_BITS,
+        parameter IMAGE_SIZE = 32
 ) (
-	// from external
-	input  wire                      clk,
-	input  wire                      resetn,
-	input  wire [6:0]                image_size,
+        // from external
+        input  wire                      clk,
+        input  wire                      resetn,
+        input  wire [6:0]                image_size,
 
-	// from channel_addr_fsm
-	input  wire [31:0]               channel_base_addr,
-	input  wire                      all_channels_done,
-	input  wire                      channel_start,
+        // from channel_addr_fsm
+        input  wire [31:0]               channel_base_addr,
+        input  wire                      all_channels_done,
+        input  wire                      channel_start,
 
-	// from row_loader_fsm
-	input  wire [ROW_DATA_WIDTH-1:0] row_data,
-	input  wire                      row_load_done,
+        // from row_loader_fsm
+        input  wire [ROW_DATA_WIDTH-1:0] row_data,
+        input  wire                      row_load_done,
 
-	// from window_generator
-	input  wire                      conv_exe_done,
+        // from window_generator
+        input  wire                      conv_exe_done,
 
-	// from store_fsm
-	input  wire                      store_halt,
+        // from store_fsm
+        input  wire                      store_halt,
 
-	// to channel_addr_fsm
-	output reg                       advance_channel,
+        // to channel_addr_fsm
+        output reg                       advance_channel,
 
-	// to row_loader_fsm
-	output reg                       load_row,
-	output reg                       is_pad_row,
-	output reg  [31:0]               row_base_addr,
+        // to row_loader_fsm
+        output reg                       load_row,
+        output reg                       is_pad_row,
+        output reg  [31:0]               row_base_addr,
 
-	// to window_generator
-	output reg                       buffer_valid,
-	output reg  [LINE_WIDTH-1:0]     line0,
-	output reg  [LINE_WIDTH-1:0]     line1,
-	output reg  [LINE_WIDTH-1:0]     line2,
+        // to window_generator
+        output reg                       buffer_valid,
+        output reg  [LINE_WIDTH-1:0]     line0,
+        output reg  [LINE_WIDTH-1:0]     line1,
+        output reg  [LINE_WIDTH-1:0]     line2,
 
-	// to external
-	output reg                       done
+        // to external
+        output reg                       done
 );
 
 //-----------------------------//
 // parameters for FSM states   //
 //-----------------------------//
 localparam [2:0]
-	IDLE           = 3'd0,
-	CHANNEL_SETUP  = 3'd1,
-	LOAD_ROW       = 3'd2,
-	WAIT_FOR_CONV  = 3'd3,
-	SHIFT_ROWS     = 3'd4,
-	FINISH         = 3'd5;
+        IDLE           = 3'd0,
+        CHANNEL_SETUP  = 3'd1,
+        LOAD_ROW       = 3'd2,
+        WAIT_FOR_CONV  = 3'd3,
+        SHIFT_ROWS     = 3'd4,
+        FINISH         = 3'd5;
 
 reg [2:0] state, next;
 
@@ -88,10 +88,10 @@ wire current_is_pad;
 //-----------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-		state <= IDLE;
-	else
-		state <= next;
+        if (!resetn)
+                state <= IDLE;
+        else
+                state <= next;
 end
 
 //----------------------------------------------//
@@ -99,111 +99,111 @@ end
 //----------------------------------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-	begin
-		row_number     <= {IMAGE_SIZE_BITS{1'b0}};
-		row_base_addr  <= 32'd0;
-		buffer_valid   <= 1'b0;
-		line0          <= {LINE_WIDTH{1'b0}};
-		line1          <= {LINE_WIDTH{1'b0}};
-		line2          <= {LINE_WIDTH{1'b0}};
-		advance_channel <= 1'b0;
-		load_row       <= 1'b0;
-		is_pad_row     <= 1'b0;
-		done           <= 1'b0;
-	end
-	else
-	begin
-		buffer_valid <= 1'b0;
-		done         <= 1'b0;
-		load_row     <= 1'b0;
-		is_pad_row <= 1'b0;
-		advance_channel <= 1'b0;
+        if (!resetn)
+        begin
+                row_number     <= {IMAGE_SIZE_BITS{1'b0}};
+                row_base_addr  <= 32'd0;
+                buffer_valid   <= 1'b0;
+                line0          <= {LINE_WIDTH{1'b0}};
+                line1          <= {LINE_WIDTH{1'b0}};
+                line2          <= {LINE_WIDTH{1'b0}};
+                advance_channel <= 1'b0;
+                load_row       <= 1'b0;
+                is_pad_row     <= 1'b0;
+                done           <= 1'b0;
+        end
+        else
+        begin
+                buffer_valid <= 1'b0;
+                done         <= 1'b0;
+                load_row     <= 1'b0;
+                is_pad_row <= 1'b0;
+                advance_channel <= 1'b0;
 
-		case (state)
-			IDLE:
-			begin
-				row_base_addr <= 32'd0;
-				buffer_valid <= 1'b0;
-				done <= 1'b0;
-				advance_channel <= 1'b0;
-				row_number <= {IMAGE_SIZE_BITS{1'b0}};
-			end
+                case (state)
+                        IDLE:
+                        begin
+                                row_base_addr <= 32'd0;
+                                buffer_valid <= 1'b0;
+                                done <= 1'b0;
+                                advance_channel <= 1'b0;
+                                row_number <= {IMAGE_SIZE_BITS{1'b0}};
+                        end
 
-			CHANNEL_SETUP:
-			begin
-				if (!all_channels_done && !advance_channel)
-				begin
-					row_base_addr <= channel_base_addr;
-					row_number   <= {IMAGE_SIZE_BITS{1'b0}};
-					load_row     <= 1'b1;
-					is_pad_row <= 1'b1; // Row 0 is always a pad row
-				end
-			end
+                        CHANNEL_SETUP:
+                        begin
+                                if (!all_channels_done && !advance_channel)
+                                begin
+                                        row_base_addr <= channel_base_addr;
+                                        row_number   <= {IMAGE_SIZE_BITS{1'b0}};
+                                        load_row     <= 1'b1;
+                                        is_pad_row <= 1'b1; // Row 0 is always a pad row
+                                end
+                        end
 
-			LOAD_ROW:
-			begin
-				if (row_load_done)
-				begin
-					case (row_number)
-						0:
-							line0 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-						1:
-							line1 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-						2:
-							line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-					endcase
+                        LOAD_ROW:
+                        begin
+                                if (row_load_done)
+                                begin
+                                        case (row_number)
+                                                0:
+                                                        line0 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
+                                                1:
+                                                        line1 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
+                                                2:
+                                                        line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
+                                        endcase
 
-					row_number <= row_number + 1'b1;
+                                        row_number <= row_number + 1'b1;
 
-					if (row_number != 2)
-					begin
-						load_row <= 1'b1;
-						if (!current_is_pad)
-							row_base_addr <= next_row_base_addr;
-					end
-				end
-			end
+                                        if (row_number != 2)
+                                        begin
+                                                load_row <= 1'b1;
+                                                if (!current_is_pad)
+                                                        row_base_addr <= next_row_base_addr;
+                                        end
+                                end
+                        end
 
-			WAIT_FOR_CONV:
-			begin
-				buffer_valid <= 1'b1;
-				if (conv_exe_done)
-				begin
-					buffer_valid <= 1'b0;
-					if (row_number != rows_per_channel)
-					begin
-						load_row <= 1'b1;
-						is_pad_row <= (row_number == rows_per_channel - 1);
-						if (!current_is_pad)
-							row_base_addr <= next_row_base_addr;
-					end
-				    	else
-					       advance_channel <= 1'b1;
-				end
-			end
+                        WAIT_FOR_CONV:
+                        begin
+                                buffer_valid <= 1'b1;
+                                if (conv_exe_done)
+                                begin
+                                        buffer_valid <= 1'b0;
+                                        if (row_number != rows_per_channel)
+                                        begin
+                                                load_row <= 1'b1;
+                                                is_pad_row <= (row_number == rows_per_channel - 1);
+                                                if (!current_is_pad)
+                                                        row_base_addr <= next_row_base_addr;
+                                        end
+                                            else
+                                               advance_channel <= 1'b1;
+                                end
+                        end
 
-			SHIFT_ROWS:
-			begin
-				if (row_load_done)
-				begin
-					line0 <= line1;
-					line1 <= line2;
-					line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
-					row_number <= row_number + 1'b1;
-				end
-			end
+                        SHIFT_ROWS:
+                        begin
+                                if (row_load_done)
+                                begin
+                                        line0 <= line1;
+                                        line1 <= line2;
+                                        line2 <= {{LINE_PAD_BITS{1'b0}}, row_data, {LINE_PAD_BITS{1'b0}}};
+                                        row_number <= row_number + 1'b1;
+                                end
+                        end
 
-			FINISH:
-				/*
-				 * This done signal is a Universal done signal indicating the last convolution operation
-				 * has been completed and the system can now be reset or reloaded with new data.
-				 * NOT to be confused with done signal indicating image loading is complete
-				 */
-				if (!store_halt)
-					done <= 1'b1;
-		endcase
-	end
+                        FINISH:
+                                /*
+                                 * This done signal is a Universal done signal indicating the last convolution operation
+                                 * has been completed and the system can now be reset or reloaded with new data.
+                                 * NOT to be confused with done signal indicating image loading is complete
+                                 */
+                                if (!store_halt)
+                                        done <= 1'b1;
+                endcase
+        end
 end
 
 //----------------------------------//
@@ -211,50 +211,50 @@ end
 //----------------------------------//
 always @(*)
 begin
-	next = state;
+        next = state;
 
-	case (state)
-		IDLE:
-		begin
-			if (channel_start)
-				next = CHANNEL_SETUP;
-			else
-				next = IDLE;
-		end
+        case (state)
+                IDLE:
+                begin
+                        if (channel_start)
+                                next = CHANNEL_SETUP;
+                        else
+                                next = IDLE;
+                end
 
-		CHANNEL_SETUP:
-		begin
-			if (advance_channel)
-				next = CHANNEL_SETUP;
-			else if (all_channels_done)
-				next = FINISH;
-			else
-				next = LOAD_ROW;
-		end
+                CHANNEL_SETUP:
+                begin
+                        if (advance_channel)
+                                next = CHANNEL_SETUP;
+                        else if (all_channels_done)
+                                next = FINISH;
+                        else
+                                next = LOAD_ROW;
+                end
 
-		LOAD_ROW:
-			next = (row_number == 8'd2 && row_load_done) ? WAIT_FOR_CONV : LOAD_ROW;
+                LOAD_ROW:
+                        next = (row_number == 8'd2 && row_load_done) ? WAIT_FOR_CONV : LOAD_ROW;
 
-		WAIT_FOR_CONV:
-			if (conv_exe_done)
-			begin
-				if (row_number == rows_per_channel)
-					next = CHANNEL_SETUP;
-				else
-					next = SHIFT_ROWS;
-			end
-			else
-				next = WAIT_FOR_CONV;
+                WAIT_FOR_CONV:
+                        if (conv_exe_done)
+                        begin
+                                if (row_number == rows_per_channel)
+                                        next = CHANNEL_SETUP;
+                                else
+                                        next = SHIFT_ROWS;
+                        end
+                        else
+                                next = WAIT_FOR_CONV;
 
-		SHIFT_ROWS:
-			next = row_load_done ? WAIT_FOR_CONV : SHIFT_ROWS;
+                SHIFT_ROWS:
+                        next = row_load_done ? WAIT_FOR_CONV : SHIFT_ROWS;
 
-		FINISH:
-			next = store_halt ? FINISH : IDLE;
+                FINISH:
+                        next = store_halt ? FINISH : IDLE;
 
-		default:
-			next = IDLE;
-	endcase
+                default:
+                        next = IDLE;
+        endcase
 end
 
 //-------------------------//

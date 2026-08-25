@@ -12,40 +12,40 @@
 
 module row_loader_fsm
 #(
-	parameter ROW_DATA_WIDTH = 256   // words_per_row(max) * WORD_WIDTH
+        parameter ROW_DATA_WIDTH = 256   // words_per_row(max) * WORD_WIDTH
 )(
-	// from row_ctrl_fsm
-	input  wire                      clk,
-	input  wire                      resetn,
-	input  wire                      load_row,
-	input  wire                      is_pad_row,
-	input  wire [31:0]               row_base_addr,
+        // from row_ctrl_fsm
+        input  wire                      clk,
+        input  wire                      resetn,
+        input  wire                      load_row,
+        input  wire                      is_pad_row,
+        input  wire [31:0]               row_base_addr,
 
-	// from store_fsm
-	input  wire                      store_halt,
+        // from store_fsm
+        input  wire                      store_halt,
 
-	// from bram_arbiter
-	input  wire                      bram_image_ready,
-	input  wire [31:0]     		 bram_image_rdata,
+        // from bram_arbiter
+        input  wire                      bram_image_ready,
+        input  wire [31:0]     		 bram_image_rdata,
 
-	// to bram_arbiter
-	output reg                       bram_image_valid,
-	output reg [31:0]                bram_image_raddr,
+        // to bram_arbiter
+        output reg                       bram_image_valid,
+        output reg [31:0]                bram_image_raddr,
 
-	// to row_ctrl_fsm
-	output reg  [ROW_DATA_WIDTH-1:0] row_data,
-	output reg                       row_load_done
+        // to row_ctrl_fsm
+        output reg  [ROW_DATA_WIDTH-1:0] row_data,
+        output reg                       row_load_done
 );
 
 //-----------------------------//
 // parameters for FSM states   //
 //-----------------------------//
 localparam [2:0]
-	IDLE      = 3'd0,
-	PAD       = 3'd1,
-	CALC_ADDR = 3'd2,
-	CAPTURE   = 3'd3,
-	DONE      = 3'd4;
+        IDLE      = 3'd0,
+        PAD       = 3'd1,
+        CALC_ADDR = 3'd2,
+        CAPTURE   = 3'd3,
+        DONE      = 3'd4;
 
 /*
  * BRAM IP width is set to 32 bits hence WORDS_PER_ROW can be derived
@@ -80,10 +80,10 @@ wire [31:0] next_bram_image_raddr;
 //-----------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-		state <= IDLE;
-	else
-		state <= next;
+        if (!resetn)
+                state <= IDLE;
+        else
+                state <= next;
 end
 
 //----------------------------------------------//
@@ -91,83 +91,83 @@ end
 //----------------------------------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-	begin
-		word_count       <= 4'd0;
-		row_data         <= {ROW_DATA_WIDTH{1'b0}};
-		row_load_done    <= 1'b0;
-		bram_image_valid <= 1'b0;
-		bram_req_pending <= 1'b0;
-		bram_image_raddr <= 32'b0;
-	end
-	else
-	begin
-		row_load_done <= 1'b0;
+        if (!resetn)
+        begin
+                word_count       <= 4'd0;
+                row_data         <= {ROW_DATA_WIDTH{1'b0}};
+                row_load_done    <= 1'b0;
+                bram_image_valid <= 1'b0;
+                bram_req_pending <= 1'b0;
+                bram_image_raddr <= 32'b0;
+        end
+        else
+        begin
+                row_load_done <= 1'b0;
 
-		case (state)
-			IDLE:
-			begin
-				word_count <= 4'd0;
-				bram_image_valid <= 1'b0;
-				bram_req_pending <= 1'b0;
-				bram_image_raddr <= 32'b0;
-			end
+                case (state)
+                        IDLE:
+                        begin
+                                word_count <= 4'd0;
+                                bram_image_valid <= 1'b0;
+                                bram_req_pending <= 1'b0;
+                                bram_image_raddr <= 32'b0;
+                        end
 
-			PAD:
-				row_data <= {ROW_DATA_WIDTH{1'b0}};
+                        PAD:
+                                row_data <= {ROW_DATA_WIDTH{1'b0}};
 
-			CALC_ADDR:
-			begin
-				if (store_halt)
-				begin
-					bram_image_raddr <= 32'b0;
-					bram_image_valid <= 1'b0;
-					bram_req_pending <= 1'b0;
-				end
-				else
-				begin
-					if(!bram_req_pending)
-					begin
-						bram_image_raddr <= next_bram_image_raddr;
-						bram_image_valid <= 1'b1;
-						bram_req_pending <= 1'b1;
-					end
-					else
-					begin
-						bram_image_valid <= 1'b1;
+                        CALC_ADDR:
+                        begin
+                                if (store_halt)
+                                begin
+                                        bram_image_raddr <= 32'b0;
+                                        bram_image_valid <= 1'b0;
+                                        bram_req_pending <= 1'b0;
+                                end
+                                else
+                                begin
+                                        if(!bram_req_pending)
+                                        begin
+                                                bram_image_raddr <= next_bram_image_raddr;
+                                                bram_image_valid <= 1'b1;
+                                                bram_req_pending <= 1'b1;
+                                        end
+                                        else
+                                        begin
+                                                bram_image_valid <= 1'b1;
 
-						if(bram_image_ready)
-						begin
-							bram_image_valid <= 1'b0;
-							bram_req_pending <= 1'b0;
-						end
-					end
-				end
-			end
+                                                if(bram_image_ready)
+                                                begin
+                                                        bram_image_valid <= 1'b0;
+                                                        bram_req_pending <= 1'b0;
+                                                end
+                                        end
+                                end
+                        end
 
-			CAPTURE:
-			begin
-				row_data[word_count*32 +: 32] <= bram_image_rdata;
+                        CAPTURE:
+                        begin
+                                row_data[word_count*32 +: 32] <= bram_image_rdata;
 
-				if(word_count == WORDS_PER_ROW - 1)
-				begin
-					word_count <= {WORD_CNT_BITS{1'b0}};
-				end
-				else
-					word_count <= word_count + 1'b1;
-			end
+                                if(word_count == WORDS_PER_ROW - 1)
+                                begin
+                                        word_count <= {WORD_CNT_BITS{1'b0}};
+                                end
+                                else
+                                        word_count <= word_count + 1'b1;
+                        end
 
-			DONE:
-			begin
-				/*
-				 * row_load_done asserted exclusively in the DONE state to avoid routing skew issues.
-				 * This ensure that row_data is fully captured before row_load_done is asserted.
-				 * This is important because row_load_done is used to trigger the next state in row_ctrl_fsm
-				 */
-				row_load_done <= 1'b1;
-			end
-		endcase
-	end
+                        DONE:
+                        begin
+                                /*
+                                 * row_load_done asserted exclusively in the DONE state to avoid routing skew issues.
+                                 * This ensure that row_data is fully captured before row_load_done is asserted.
+                                 * This is important because row_load_done is used to trigger the next state in row_ctrl_fsm
+                                 */
+                                row_load_done <= 1'b1;
+                        end
+                endcase
+        end
 end
 
 //----------------------------------//
@@ -175,47 +175,47 @@ end
 //----------------------------------//
 always @(*)
 begin
-	next = state;
+        next = state;
 
-	case (state)
-		IDLE:
-		begin
-			if (load_row)
-			begin
-				if(is_pad_row)
-					next = PAD;
-				else
-					next = CALC_ADDR;
-			end
-			else
-				next = IDLE;
-		end
+        case (state)
+                IDLE:
+                begin
+                        if (load_row)
+                        begin
+                                if(is_pad_row)
+                                        next = PAD;
+                                else
+                                        next = CALC_ADDR;
+                        end
+                        else
+                                next = IDLE;
+                end
 
-		PAD:
-			next = DONE;
+                PAD:
+                        next = DONE;
 
-		CALC_ADDR:
-		begin
-			if (!store_halt && bram_image_ready && bram_req_pending)
-				next = CAPTURE;
-			else
-				next = CALC_ADDR;
-		end
+                CALC_ADDR:
+                begin
+                        if (!store_halt && bram_image_ready && bram_req_pending)
+                                next = CAPTURE;
+                        else
+                                next = CALC_ADDR;
+                end
 
-		CAPTURE:
-		begin
-			if (word_count == WORDS_PER_ROW - 1)
-				next = DONE;
-			else
-				next = CALC_ADDR;
-		end
+                CAPTURE:
+                begin
+                        if (word_count == WORDS_PER_ROW - 1)
+                                next = DONE;
+                        else
+                                next = CALC_ADDR;
+                end
 
-		DONE:
-			next = IDLE;
+                DONE:
+                        next = IDLE;
 
-		default:
-			next = IDLE;
-	endcase
+                default:
+                        next = IDLE;
+        endcase
 end
 
 /*

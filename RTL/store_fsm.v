@@ -12,36 +12,36 @@
 
 module store_fsm
 (
-	// from external
-	input  wire         clk,
-	input  wire         resetn,
+        // from external
+        input  wire         clk,
+        input  wire         resetn,
 
-	// from mac_parallel
-	input  wire         mac_valid,
-	input  wire [255:0] y,
+        // from mac_parallel
+        input  wire         mac_valid,
+        input  wire [255:0] y,
 
-	// from picoRV32
-	input  wire [31:0]  dest_base_addr,
+        // from picoRV32
+        input  wire [31:0]  dest_base_addr,
 
-	//from BRAM IP
-	input wire 	    bram_store_ready,
+        //from BRAM IP
+        input wire 	    bram_store_ready,
 
-	// to BRAM IP
-	output reg  [31:0]  bram_store_waddr,
-	output reg  [31:0]  bram_store_wdata,
-	output reg          bram_store_valid,
-	output reg          bram_store_wen,
+        // to BRAM IP
+        output reg  [31:0]  bram_store_waddr,
+        output reg  [31:0]  bram_store_wdata,
+        output reg          bram_store_valid,
+        output reg          bram_store_wen,
 
-	// to mac_parallel
-	output reg          store_halt
+        // to mac_parallel
+        output reg          store_halt
 );
 
 //------------//
 // FSM States //
 //------------//
 localparam
-	IDLE  = 1'b0,
-	WRITE = 1'b1;
+        IDLE  = 1'b0,
+        WRITE = 1'b1;
 
 //-----------------//
 // State Registers //
@@ -91,10 +91,10 @@ reg bram_req_pending;
 //------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-		state <= IDLE;
-	else
-		state <= next;
+        if (!resetn)
+                state <= IDLE;
+        else
+                state <= next;
 end
 
 //----------------------------------------------//
@@ -102,80 +102,80 @@ end
 //----------------------------------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-	begin
-		mac_burst_count <= 2'd0;
-		bram_store_valid <= 1'b0;
-		bram_store_wen <= 1'b0;
-		bram_store_waddr <= 32'd0;
-		bram_store_wdata <= 32'd0;
-		channel_idx_count <= 4'd0;
-		pixel_pair_offset <= 16'd0;
-		mac_burst_buff0 <= 256'd0;
-		mac_burst_buff1 <= 256'd0;
-		store_halt <= 1'b0;
-		bram_req_pending <= 1'b0;
-	end
-	else
-	begin
-		case (state)
-			IDLE:
-			begin
-				bram_store_valid <= 1'b0;
-				bram_store_wen <= 1'b0;
-				store_halt <= 1'b0;
-				bram_req_pending <= 1'b0;
+        if (!resetn)
+        begin
+                mac_burst_count <= 2'd0;
+                bram_store_valid <= 1'b0;
+                bram_store_wen <= 1'b0;
+                bram_store_waddr <= 32'd0;
+                bram_store_wdata <= 32'd0;
+                channel_idx_count <= 4'd0;
+                pixel_pair_offset <= 16'd0;
+                mac_burst_buff0 <= 256'd0;
+                mac_burst_buff1 <= 256'd0;
+                store_halt <= 1'b0;
+                bram_req_pending <= 1'b0;
+        end
+        else
+        begin
+                case (state)
+                        IDLE:
+                        begin
+                                bram_store_valid <= 1'b0;
+                                bram_store_wen <= 1'b0;
+                                store_halt <= 1'b0;
+                                bram_req_pending <= 1'b0;
 
-				if (mac_valid && mac_burst_count == 2'd0)
-				begin
-					mac_burst_buff0 <= y;
-					mac_burst_count  <= 2'd1;
-				end
-				else if (mac_valid && mac_burst_count == 2'd1)
-				begin
-					mac_burst_buff1     <= y;
-					mac_burst_count      <= 2'd2;
-					store_halt     <= 1'b1;
-					channel_idx_count <= 4'd0;
-				end
-			end
+                                if (mac_valid && mac_burst_count == 2'd0)
+                                begin
+                                        mac_burst_buff0 <= y;
+                                        mac_burst_count  <= 2'd1;
+                                end
+                                else if (mac_valid && mac_burst_count == 2'd1)
+                                begin
+                                        mac_burst_buff1     <= y;
+                                        mac_burst_count      <= 2'd2;
+                                        store_halt     <= 1'b1;
+                                        channel_idx_count <= 4'd0;
+                                end
+                        end
 
-			WRITE:
-			begin
-				if (!bram_req_pending)
-				begin
-					bram_store_valid <= 1'b1;
-					bram_store_wen   <= 1'b1;
-					bram_store_waddr <= next_bram_store_waddr;
-					bram_store_wdata <= next_bram_store_wdata;
+                        WRITE:
+                        begin
+                                if (!bram_req_pending)
+                                begin
+                                        bram_store_valid <= 1'b1;
+                                        bram_store_wen   <= 1'b1;
+                                        bram_store_waddr <= next_bram_store_waddr;
+                                        bram_store_wdata <= next_bram_store_wdata;
 
-					bram_req_pending <= 1'b1;
-				end
-				else
-				begin
-					if (bram_store_valid && bram_store_ready)
-					begin
-						bram_store_valid <= 1'b0;
-						bram_store_wen   <= 1'b0;
-						bram_req_pending <= 1'b0;
+                                        bram_req_pending <= 1'b1;
+                                end
+                                else
+                                begin
+                                        if (bram_store_valid && bram_store_ready)
+                                        begin
+                                                bram_store_valid <= 1'b0;
+                                                bram_store_wen   <= 1'b0;
+                                                bram_req_pending <= 1'b0;
 
-						mac_burst_buff0 <= mac_burst_buff0 >> 16;
-						mac_burst_buff1 <= mac_burst_buff1 >> 16;
+                                                mac_burst_buff0 <= mac_burst_buff0 >> 16;
+                                                mac_burst_buff1 <= mac_burst_buff1 >> 16;
 
-						if (channel_idx_count == 4'd15)
-						begin
-							channel_idx_count <= 4'd0;
-							pixel_pair_offset <= pixel_pair_offset + 16'd1;
-							mac_burst_count <= 2'd0;
-							store_halt <= 1'b0;
-						end
-						else
-							channel_idx_count <= channel_idx_count + 4'd1;
-					end
-				end
-			end
-		endcase
-	end
+                                                if (channel_idx_count == 4'd15)
+                                                begin
+                                                        channel_idx_count <= 4'd0;
+                                                        pixel_pair_offset <= pixel_pair_offset + 16'd1;
+                                                        mac_burst_count <= 2'd0;
+                                                        store_halt <= 1'b0;
+                                                end
+                                                else
+                                                        channel_idx_count <= channel_idx_count + 4'd1;
+                                        end
+                                end
+                        end
+                endcase
+        end
 end
 
 //----------------------------------//
@@ -183,24 +183,24 @@ end
 //----------------------------------//
 always @(*)
 begin
-	next = state;
+        next = state;
 
-	case (state)
-		IDLE:
-		begin
-			if (mac_valid && mac_burst_count == 2'd1)
-				next = WRITE;
-		end
+        case (state)
+                IDLE:
+                begin
+                        if (mac_valid && mac_burst_count == 2'd1)
+                                next = WRITE;
+                end
 
-		WRITE:
-		begin
-			if (bram_store_valid && bram_store_ready && channel_idx_count == 4'd15)
-				next = IDLE;
-		end
+                WRITE:
+                begin
+                        if (bram_store_valid && bram_store_ready && channel_idx_count == 4'd15)
+                                next = IDLE;
+                end
 
-		default:
-			next = IDLE;
-	endcase
+                default:
+                        next = IDLE;
+        endcase
 end
 
 /*

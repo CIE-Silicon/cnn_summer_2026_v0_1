@@ -1,49 +1,73 @@
+`timescale 1ns / 1ps
+
+//////////////////////////////////////////////////////////////////////////////////
+// Engineer: Shashank Tiwari, Vishal V
+// Update Date: 25.08.2026
+// Module Name: mac_unit.v
+// Project Name: CNN Summer
+// Description:
+// This module generates the mac_valid signal based on the window_valid,
+// store_halt, mac_weight_valid, and weight_load_start signals. It ensures that
+// the MAC units only process valid windows when weights are ready and there is
+// no store halt condition.
+////////////////////////////////////////////////////////////////////////////////////
+
 module mac_valid_driver
 (
-    input wire clk,
-    input wire resetn,
-    input wire window_valid,
-    input wire store_halt,
-    input wire mac_weight_valid,
-    input wire weight_load_start,
-    output reg mac_valid
+        input wire clk,
+        input wire resetn,
+        input wire window_valid,
+        input wire store_halt,
+        input wire mac_weight_valid,
+        input wire weight_load_start,
+        output reg mac_valid
 );
 
 wire accept_window;
 reg mac_valid_r1;
 reg weights_ready;
-reg pending;                 
+reg pending;
 
-always @(posedge clk) begin
-    if (!resetn)
-        weights_ready <= 1'b0;
-    else if (weight_load_start)
-        weights_ready <= 1'b0;
-    else if (mac_weight_valid)
-        weights_ready <= 1'b1;
+always @(posedge clk)
+begin
+        if (!resetn)
+                weights_ready <= 1'b0;
+        else if (weight_load_start)
+                weights_ready <= 1'b0;
+        else if (mac_weight_valid)
+                weights_ready <= 1'b1;
 end
 
 
-always @(posedge clk) begin
-    if (!resetn)
-        pending <= 1'b0;
-    else if (accept_window)
-        pending <= 1'b0;
-    else if (window_valid)
-        pending <= 1'b1;
+always @(posedge clk)
+begin
+        if (!resetn)
+                pending <= 1'b0;
+        else if (accept_window)
+                pending <= 1'b0;
+        else if (window_valid)
+                pending <= 1'b1;
 end
 
-always @(posedge clk) begin
-    if (!resetn) begin
-        mac_valid_r1 <= 1'b0;
-        mac_valid    <= 1'b0;
-    end else begin
-        mac_valid_r1 <= accept_window;
-        mac_valid    <= mac_valid_r1;
-    end
+always @(posedge clk)
+begin
+        if (!resetn)
+        begin
+                mac_valid_r1 <= 1'b0;
+                mac_valid    <= 1'b0;
+        end
+        else
+        begin
+                mac_valid_r1 <= accept_window;
+                mac_valid    <= mac_valid_r1;
+        end
 end
 
-
+/*
+ * The accept_window signal is asserted when either the window_valid signal is high or there is a pending window,
+ * and the weights are ready, and there is no store halt condition. This ensures that the MAC units only process
+ * valid windows when weights are ready and there is no store halt condition.
+ */
 assign accept_window = (window_valid || pending) && weights_ready && !store_halt;
 
 endmodule

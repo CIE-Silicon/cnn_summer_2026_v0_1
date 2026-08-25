@@ -14,43 +14,43 @@
 
 module bram_arbiter
 (
-	// from external
-	input wire clk,
-	input wire resetn,
+        // from external
+        input wire clk,
+        input wire resetn,
 
-	// from weight_loader_fsm
-	input wire bram_weight_valid,
-	input wire [31:0] bram_weight_raddr,
+        // from weight_loader_fsm
+        input wire bram_weight_valid,
+        input wire [31:0] bram_weight_raddr,
 
-	// from store_fsm
-	input wire bram_store_valid,
-	input wire bram_store_wen,
-	input wire [31:0] bram_store_waddr,
-	input wire [31:0] bram_store_wdata,
+        // from store_fsm
+        input wire bram_store_valid,
+        input wire bram_store_wen,
+        input wire [31:0] bram_store_waddr,
+        input wire [31:0] bram_store_wdata,
 
-	// from image_loader_fsm
-	input wire bram_image_valid,
-	input wire [31:0] bram_image_raddr,
+        // from image_loader_fsm
+        input wire bram_image_valid,
+        input wire [31:0] bram_image_raddr,
 
-	// from BRAM IP
-	input wire [31:0] doutb,
+        // from BRAM IP
+        input wire [31:0] doutb,
 
-	// to weight_loader_fsm
-	output reg bram_weight_ready,
-	output wire [31:0] bram_weight_rdata,
+        // to weight_loader_fsm
+        output reg bram_weight_ready,
+        output wire [31:0] bram_weight_rdata,
 
-	// to store_fsm
-	output reg bram_store_ready,
+        // to store_fsm
+        output reg bram_store_ready,
 
-	// to image_loader_fsm
-	output reg bram_image_ready,
-	output wire [31:0] bram_image_rdata,
+        // to image_loader_fsm
+        output reg bram_image_ready,
+        output wire [31:0] bram_image_rdata,
 
-	// to BRAM IP
-	output reg [31:0] addrb,
-	output reg [31:0] dinb,
-	output reg [0:0] web,
-	output reg enb
+        // to BRAM IP
+        output reg [31:0] addrb,
+        output reg [31:0] dinb,
+        output reg [0:0] web,
+        output reg enb
 );
 
 assign bram_weight_rdata = doutb;
@@ -71,54 +71,54 @@ reg next_bram_image_ready;
  */
 always@(posedge clk)
 begin
-	if(!resetn)
-	begin
-		bram_weight_ready <= 1'b0;
-		bram_store_ready <= 1'b0;
-		bram_image_ready <= 1'b0;
-	end
-	else
-	begin
+        if(!resetn)
+        begin
+                bram_weight_ready <= 1'b0;
+                bram_store_ready <= 1'b0;
+                bram_image_ready <= 1'b0;
+        end
+        else
+        begin
 
-		bram_weight_ready <= next_bram_weight_ready;
-		bram_store_ready <= next_bram_store_ready;
-		bram_image_ready <= next_bram_image_ready;
-	end
+                bram_weight_ready <= next_bram_weight_ready;
+                bram_store_ready <= next_bram_store_ready;
+                bram_image_ready <= next_bram_image_ready;
+        end
 end
 
 always@(*)
 begin
-	// Default Pre-assignments to prevent latches and resolve unassigned branches
-	addrb = 32'd0;
-	enb = 1'b0;
-	web = 1'b0;
-	dinb = 32'd0;
-	next_bram_weight_ready = 1'b0;
-	next_bram_store_ready = 1'b0;
-	next_bram_image_ready = 1'b0;
+        // Default Pre-assignments to prevent latches and resolve unassigned branches
+        addrb = 32'd0;
+        enb = 1'b0;
+        web = 1'b0;
+        dinb = 32'd0;
+        next_bram_weight_ready = 1'b0;
+        next_bram_store_ready = 1'b0;
+        next_bram_image_ready = 1'b0;
 
-	if (bram_weight_valid && !bram_weight_ready)
-	begin
-		addrb = bram_weight_raddr  ;
-		enb = 1'b1;
-		web = 1'b0; // weight_loader_fsm never writes to BRAM
-		next_bram_weight_ready = 1'b1;
-	end
-	else if (bram_store_valid && !bram_store_ready)
-	begin
-		addrb = bram_store_waddr ;
-		enb = 1'b1;
-		web = bram_store_wen;
-		dinb = bram_store_wdata;
-		next_bram_store_ready = 1'b1;
-	end
-	else if (bram_image_valid && !bram_image_ready)
-	begin
-		addrb = bram_image_raddr ;
-		enb = 1'b1;
-		web = 1'b0; // image_loader_fsm never writes to BRAM'
-		next_bram_image_ready = 1'b1;
-	end
+        if (bram_weight_valid && !bram_weight_ready)
+        begin
+                addrb = bram_weight_raddr  ;
+                enb = 1'b1;
+                web = 1'b0; // weight_loader_fsm never writes to BRAM
+                next_bram_weight_ready = 1'b1;
+        end
+        else if (bram_store_valid && !bram_store_ready)
+        begin
+                addrb = bram_store_waddr ;
+                enb = 1'b1;
+                web = bram_store_wen;
+                dinb = bram_store_wdata;
+                next_bram_store_ready = 1'b1;
+        end
+        else if (bram_image_valid && !bram_image_ready)
+        begin
+                addrb = bram_image_raddr ;
+                enb = 1'b1;
+                web = 1'b0; // image_loader_fsm never writes to BRAM'
+                next_bram_image_ready = 1'b1;
+        end
 end
 
 endmodule

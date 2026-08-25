@@ -16,29 +16,29 @@
 
 module channel_addr_fsm
 (
-	// from external
-	input  wire        clk,
-	input  wire        resetn,
-	input  wire        start,
-	input  wire [31:0] image_base_addr,
-	input  wire [6:0]  num_channels,
-	input  wire [6:0]  image_size,
+        // from external
+        input  wire        clk,
+        input  wire        resetn,
+        input  wire        start,
+        input  wire [31:0] image_base_addr,
+        input  wire [6:0]  num_channels,
+        input  wire [6:0]  image_size,
 
-	// from row_ctrl_fsm
-	input  wire        advance_channel,
+        // from row_ctrl_fsm
+        input  wire        advance_channel,
 
-	// to row_ctrl_fsm
-	output reg  [31:0] channel_base_addr,
-	output reg         all_channels_done,
-	output reg         channel_start
+        // to row_ctrl_fsm
+        output reg  [31:0] channel_base_addr,
+        output reg         all_channels_done,
+        output reg         channel_start
 );
 
 //-----------------------------//
 // parameters for FSM states   //
 //-----------------------------//
 localparam [0:0]
-	IDLE   = 1'd0,
-	ACTIVE = 1'd1;
+        IDLE   = 1'd0,
+        ACTIVE = 1'd1;
 
 reg state, next;
 
@@ -64,10 +64,10 @@ wire [31:0] channel_stride;
 //-----------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-		state <= IDLE;
-	else
-		state <= next;
+        if (!resetn)
+                state <= IDLE;
+        else
+                state <= next;
 end
 
 //----------------------------------------------//
@@ -75,42 +75,42 @@ end
 //----------------------------------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-	begin
-		channel_idx       <= 7'd0;
-		channel_base_addr <= 32'd0;
-		all_channels_done <= 1'b0;
-		channel_start <= 1'b0;
-	end
-	else
-	begin
-		channel_start <= 1'b0;
-		all_channels_done <= 1'b0;
+        if (!resetn)
+        begin
+                channel_idx       <= 7'd0;
+                channel_base_addr <= 32'd0;
+                all_channels_done <= 1'b0;
+                channel_start <= 1'b0;
+        end
+        else
+        begin
+                channel_start <= 1'b0;
+                all_channels_done <= 1'b0;
 
-		case (state)
-			IDLE:
-				if (start)
-				begin
-					channel_idx       <= 7'd0;
-					channel_base_addr <= image_base_addr;
-					all_channels_done <= 1'b0;
-					channel_start     <= 1'b1;
-				end
+                case (state)
+                        IDLE:
+                                if (start)
+                                begin
+                                        channel_idx       <= 7'd0;
+                                        channel_base_addr <= image_base_addr;
+                                        all_channels_done <= 1'b0;
+                                        channel_start     <= 1'b1;
+                                end
 
-			ACTIVE:
-				if (advance_channel)
-				begin
-					if (channel_idx == num_channels - 7'd1)
-						all_channels_done <= 1'b1;
-					else
-					begin
-						channel_idx       <= channel_idx + 7'd1;
-						channel_base_addr <= channel_base_addr + channel_stride;
-						channel_start     <= 1'b1;
-					end
-				end
-		endcase
-	end
+                        ACTIVE:
+                                if (advance_channel)
+                                begin
+                                        if (channel_idx == num_channels - 7'd1)
+                                                all_channels_done <= 1'b1;
+                                        else
+                                        begin
+                                                channel_idx       <= channel_idx + 7'd1;
+                                                channel_base_addr <= channel_base_addr + channel_stride;
+                                                channel_start     <= 1'b1;
+                                        end
+                                end
+                endcase
+        end
 end
 
 //----------------------------------//
@@ -118,24 +118,24 @@ end
 //----------------------------------//
 always @(*)
 begin
-	next = state;
+        next = state;
 
-	case (state)
-		IDLE:
-			if (start)
-				next = ACTIVE;
-			else
-				next = IDLE;
+        case (state)
+                IDLE:
+                        if (start)
+                                next = ACTIVE;
+                        else
+                                next = IDLE;
 
-		ACTIVE:
-			if (advance_channel && (channel_idx == num_channels - 7'd1))
-				next = IDLE;
-			else
-				next = ACTIVE;
+                ACTIVE:
+                        if (advance_channel && (channel_idx == num_channels - 7'd1))
+                                next = IDLE;
+                        else
+                                next = ACTIVE;
 
-		default:
-			next = IDLE;
-	endcase
+                default:
+                        next = IDLE;
+        endcase
 end
 
 //-------------------------//

@@ -12,37 +12,37 @@
 
 module weight_loader_fsm
 #(
-	parameter NUM_MAC_UNITS = 16,
-	parameter WT_REG_WIDTH = NUM_MAC_UNITS * 4
+        parameter NUM_MAC_UNITS = 16,
+        parameter WT_REG_WIDTH = NUM_MAC_UNITS * 4
 ) (
-	// from external
-	input  wire        clk,
-	input  wire        resetn,
+        // from external
+        input  wire        clk,
+        input  wire        resetn,
 
-	// from picoRV32
-	input  wire        weight_load_start,
-	input  wire [31:0] weight_base_addr,
-	input  wire [6:0]  num_kernels,
+        // from picoRV32
+        input  wire        weight_load_start,
+        input  wire [31:0] weight_base_addr,
+        input  wire [6:0]  num_kernels,
 
-	// from BRAM port B
-	input  wire        bram_weight_ready,
-	input  wire [31:0] bram_weight_rdata,
+        // from BRAM port B
+        input  wire        bram_weight_ready,
+        input  wire [31:0] bram_weight_rdata,
 
-	// to mac_parallel
-	output reg         mac_weight_valid,
-	output reg [WT_REG_WIDTH-1:0] w0_reg, output reg [WT_REG_WIDTH-1:0] w1_reg, output reg [WT_REG_WIDTH-1:0] w2_reg,
-	output reg [WT_REG_WIDTH-1:0] w3_reg, output reg [WT_REG_WIDTH-1:0] w4_reg, output reg [WT_REG_WIDTH-1:0] w5_reg,
-	output reg [WT_REG_WIDTH-1:0] w6_reg, output reg [WT_REG_WIDTH-1:0] w7_reg, output reg [WT_REG_WIDTH-1:0] w8_reg,
+        // to mac_parallel
+        output reg         mac_weight_valid,
+        output reg [WT_REG_WIDTH-1:0] w0_reg, output reg [WT_REG_WIDTH-1:0] w1_reg, output reg [WT_REG_WIDTH-1:0] w2_reg,
+        output reg [WT_REG_WIDTH-1:0] w3_reg, output reg [WT_REG_WIDTH-1:0] w4_reg, output reg [WT_REG_WIDTH-1:0] w5_reg,
+        output reg [WT_REG_WIDTH-1:0] w6_reg, output reg [WT_REG_WIDTH-1:0] w7_reg, output reg [WT_REG_WIDTH-1:0] w8_reg,
 
-	// to BRAM port B
-	output reg         bram_weight_valid,
-	output reg  [31:0] bram_weight_raddr
+        // to BRAM port B
+        output reg         bram_weight_valid,
+        output reg  [31:0] bram_weight_raddr
 );
 
 localparam [1:0]
-	IDLE       = 2'd0,
-	CALC_ADDR  = 2'd1,
-	CAPTURE_WT = 2'd2;
+        IDLE       = 2'd0,
+        CALC_ADDR  = 2'd1,
+        CAPTURE_WT = 2'd2;
 
 /*
  * This localparam defines the number of rows per weight in the BRAM.
@@ -94,127 +94,127 @@ reg [KERNEL_CNT_BITS-1:0] kernel_row_cnt;
 //------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-		state <= IDLE;
-	else
-		state <= next;
+        if (!resetn)
+                state <= IDLE;
+        else
+                state <= next;
 end
 //---------------------------------------------------------//
 // Sequential Signal Assignments for each state            //
 //---------------------------------------------------------//
 always @(posedge clk)
 begin
-	if (!resetn)
-	begin
-		mac_weight_valid <= 1'b0;
-		bram_weight_raddr <= 32'd0;
-		weight_idx_cnt <= 4'd0;
-		kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
-		base_addr_r <= 32'd0;
-		w0_reg <= {WT_REG_WIDTH{1'b0}}; w1_reg <= {WT_REG_WIDTH{1'b0}}; w2_reg <= {WT_REG_WIDTH{1'b0}};
-		w3_reg <= {WT_REG_WIDTH{1'b0}}; w4_reg <= {WT_REG_WIDTH{1'b0}}; w5_reg <= {WT_REG_WIDTH{1'b0}};
-		w6_reg <= {WT_REG_WIDTH{1'b0}}; w7_reg <= {WT_REG_WIDTH{1'b0}}; w8_reg <= {WT_REG_WIDTH{1'b0}};
-		bram_weight_valid <= 1'b0;
-		bram_req_pending <= 1'b0;
-	end
-	else
-	begin
-		bram_weight_valid <= 1'b0;
-		mac_weight_valid <= 1'b0;
+        if (!resetn)
+        begin
+                mac_weight_valid <= 1'b0;
+                bram_weight_raddr <= 32'd0;
+                weight_idx_cnt <= 4'd0;
+                kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
+                base_addr_r <= 32'd0;
+                w0_reg <= {WT_REG_WIDTH{1'b0}}; w1_reg <= {WT_REG_WIDTH{1'b0}}; w2_reg <= {WT_REG_WIDTH{1'b0}};
+                w3_reg <= {WT_REG_WIDTH{1'b0}}; w4_reg <= {WT_REG_WIDTH{1'b0}}; w5_reg <= {WT_REG_WIDTH{1'b0}};
+                w6_reg <= {WT_REG_WIDTH{1'b0}}; w7_reg <= {WT_REG_WIDTH{1'b0}}; w8_reg <= {WT_REG_WIDTH{1'b0}};
+                bram_weight_valid <= 1'b0;
+                bram_req_pending <= 1'b0;
+        end
+        else
+        begin
+                bram_weight_valid <= 1'b0;
+                mac_weight_valid <= 1'b0;
 
-		case (state)
-			IDLE:
-			begin
-				weight_idx_cnt <= 4'd0;
-				kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
-				bram_req_pending <= 1'b0;
-				bram_weight_valid <= 1'b0;
-				mac_weight_valid <= 1'b0;
-				bram_weight_raddr <= 32'd0;
+                case (state)
+                        IDLE:
+                        begin
+                                weight_idx_cnt <= 4'd0;
+                                kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
+                                bram_req_pending <= 1'b0;
+                                bram_weight_valid <= 1'b0;
+                                mac_weight_valid <= 1'b0;
+                                bram_weight_raddr <= 32'd0;
 
-				if (weight_load_start)
-				begin
-					base_addr_r <= weight_base_addr;
-					mac_weight_valid <= 1'b0;
-				end
-			end
+                                if (weight_load_start)
+                                begin
+                                        base_addr_r <= weight_base_addr;
+                                        mac_weight_valid <= 1'b0;
+                                end
+                        end
 
-			CALC_ADDR:
-			begin
-				if (!bram_req_pending)
-				begin
-					bram_weight_raddr <= next_bram_weight_raddr;
-					bram_weight_valid <= 1'b1;
-					bram_req_pending <= 1'b1;
-				end
-				else
-				begin
-					bram_weight_valid <= 1'b1;
+                        CALC_ADDR:
+                        begin
+                                if (!bram_req_pending)
+                                begin
+                                        bram_weight_raddr <= next_bram_weight_raddr;
+                                        bram_weight_valid <= 1'b1;
+                                        bram_req_pending <= 1'b1;
+                                end
+                                else
+                                begin
+                                        bram_weight_valid <= 1'b1;
 
-					if (bram_weight_ready)
-					begin
-						bram_req_pending <= 1'b0;
-						bram_weight_valid <= 1'b0;
-					end
-				end
-			end
+                                        if (bram_weight_ready)
+                                        begin
+                                                bram_req_pending <= 1'b0;
+                                                bram_weight_valid <= 1'b0;
+                                        end
+                                end
+                        end
 
-			CAPTURE_WT:
-			begin
-				case (weight_idx_cnt)
-					4'd0:
-						w0_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                        CAPTURE_WT:
+                        begin
+                                case (weight_idx_cnt)
+                                        4'd0:
+                                                w0_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd1:
-						w1_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd1:
+                                                w1_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd2:
-						w2_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd2:
+                                                w2_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd3:
-						w3_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd3:
+                                                w3_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd4:
-						w4_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd4:
+                                                w4_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd5:
-						w5_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd5:
+                                                w5_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd6:
-						w6_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd6:
+                                                w6_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd7:
-						w7_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd7:
+                                                w7_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					4'd8:
-						w8_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
+                                        4'd8:
+                                                w8_reg[(kernel_row_cnt * 32) +: 32] <= bram_weight_rdata;
 
-					default: ; // if other case: registers hold their state
-				endcase
+                                        default: ; // if other case: registers hold their state
+                                endcase
 
-				if (kernel_row_cnt == (ROWS_PER_WT - 1))
-				begin
-					kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
+                                if (kernel_row_cnt == (ROWS_PER_WT - 1))
+                                begin
+                                        kernel_row_cnt <= {KERNEL_CNT_BITS{1'b0}};
 
-					if (weight_idx_cnt == 4'd8)
-					begin
-						weight_idx_cnt <= 4'd0;
+                                        if (weight_idx_cnt == 4'd8)
+                                        begin
+                                                weight_idx_cnt <= 4'd0;
 
-						/*
-						 * Set mac_weight_valid to 1 to indicate that all weights have been loaded.
-						 * This is a single-cycle pulse at the top of this always block deasserts
-						 * it the very next cycle.
-						 */
-						mac_weight_valid <= 1'b1;
-					end
-					else
-						weight_idx_cnt <= weight_idx_cnt + 4'd1;
-				end
-				else
-					kernel_row_cnt <= kernel_row_cnt + 1'b1;
-			end
-		endcase
-	end
+                                                /*
+                                                 * Set mac_weight_valid to 1 to indicate that all weights have been loaded.
+                                                 * This is a single-cycle pulse at the top of this always block deasserts
+                                                 * it the very next cycle.
+                                                 */
+                                                mac_weight_valid <= 1'b1;
+                                        end
+                                        else
+                                                weight_idx_cnt <= weight_idx_cnt + 4'd1;
+                                end
+                                else
+                                        kernel_row_cnt <= kernel_row_cnt + 1'b1;
+                        end
+                endcase
+        end
 end
 
 //---------------------------------//
@@ -222,36 +222,36 @@ end
 //---------------------------------//
 always @(*)
 begin
-	next = state;
+        next = state;
 
-	case (state)
-		IDLE:
-		begin
-			if (weight_load_start)
-				next = CALC_ADDR;
-			else
-				next = IDLE;
-		end
+        case (state)
+                IDLE:
+                begin
+                        if (weight_load_start)
+                                next = CALC_ADDR;
+                        else
+                                next = IDLE;
+                end
 
-		CALC_ADDR:
-		begin
-			if (bram_weight_ready && bram_req_pending)
-				next = CAPTURE_WT;
-			else
-				next = CALC_ADDR;
-		end
+                CALC_ADDR:
+                begin
+                        if (bram_weight_ready && bram_req_pending)
+                                next = CAPTURE_WT;
+                        else
+                                next = CALC_ADDR;
+                end
 
-		CAPTURE_WT:
-		begin
-			if (kernel_row_cnt == (ROWS_PER_WT - 1) && weight_idx_cnt == 4'd8)
-				next = IDLE;
-			else
-				next = CALC_ADDR;
-		end
+                CAPTURE_WT:
+                begin
+                        if (kernel_row_cnt == (ROWS_PER_WT - 1) && weight_idx_cnt == 4'd8)
+                                next = IDLE;
+                        else
+                                next = CALC_ADDR;
+                end
 
-		default:
-			next = IDLE;
-	endcase
+                default:
+                        next = IDLE;
+        endcase
 end
 
 /*
