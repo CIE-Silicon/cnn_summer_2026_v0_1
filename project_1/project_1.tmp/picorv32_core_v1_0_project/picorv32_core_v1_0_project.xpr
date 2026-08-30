@@ -4,10 +4,10 @@
 <!-- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.                   -->
 <!-- Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.   -->
 
-<Project Product="Vivado" Version="7" Minor="71" Path="c:/users/visha/desktop/ciesummer/myrtldesigns/frontend_repo_v_0_1/project_1/project_1.tmp/picorv32_core_v1_0_project/picorv32_core_v1_0_project.xpr">
+<Project Product="Vivado" Version="7" Minor="71" Path="c:/vivadoprojects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/project_1/project_1.tmp/picorv32_core_v1_0_project/picorv32_core_v1_0_project.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
-    <Option Name="Id" Val="ca1bac92a78a4f659dc34482265f1867"/>
+    <Option Name="Id" Val="24b525d7ef944f7bb59cc80ad931b84a"/>
     <Option Name="Part" Val="xc7a35tcsg324-1"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
@@ -47,7 +47,7 @@
     <Option Name="ActiveSimSet" Val="sim_1"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
-    <Option Name="IPRepoPath" Val="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO"/>
+    <Option Name="IPRepoPath" Val="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO"/>
     <Option Name="IPOutputRepo" Val="$PCACHEDIR/ip"/>
     <Option Name="IPDefaultOutputPath" Val="$PGENDIR/sources_1"/>
     <Option Name="IPCachePermission" Val="read"/>
@@ -90,17 +90,17 @@
   <FileSets Version="1" Minor="32">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/bootrom_pico.coe">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/bootrom_pico.coe">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/component.xml">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/component.xml">
         <FileInfo SFType="IPXACT"/>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/blk_mem_gen_0.xci">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/blk_mem_gen_0.xci">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -108,7 +108,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/bram_arbiter.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/bram_arbiter.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -116,7 +116,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/cnn_coprocessor_wrapper.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/channel_addr_fsm.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -124,7 +124,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/image_loader_fsm.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/cnn_coprocessor_subsystem.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -132,7 +132,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/mac_parallel.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/image_loader_wrapper.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -140,7 +140,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/mac_unit.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/mac_parallel.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -148,16 +148,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32.v">
-        <FileInfo>
-          <Attr Name="Library" Val=""/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="ipstatic"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/store_fsm.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/mac_unit.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -165,7 +156,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/weight_loader_fsm.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/mac_valid_driver.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -173,7 +164,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/window_generator.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -181,19 +172,58 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32_core.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/row_ctrl_fsm.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="ipstatic"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/row_loader_fsm.v">
+        <FileInfo>
+          <Attr Name="Library" Val=""/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/store_fsm.v">
+        <FileInfo>
+          <Attr Name="Library" Val=""/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/weight_loader_fsm.v">
+        <FileInfo>
+          <Attr Name="Library" Val=""/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/window_generator.v">
+        <FileInfo>
+          <Attr Name="Library" Val=""/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32_core.v">
+        <FileInfo>
+          <Attr Name="Library" Val=""/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="picorv32_core"/>
-        <Option Name="TopRTLFile" Val="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32_core.v"/>
+        <Option Name="TopRTLFile" Val="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/src/picorv32_core.v"/>
       </Config>
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
@@ -203,7 +233,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1" RelGenDir="$PGENDIR/sim_1">
-      <File Path="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/project_2/project_2.srcs/sim_1/new/tb.v">
+      <File Path="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/project_2/project_2.srcs/sim_1/new/tb.v">
         <FileInfo>
           <Attr Name="Library" Val=""/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -213,7 +243,7 @@
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="pico_axi_tb"/>
-        <Option Name="TopRTLFile" Val="$PPRDIR/../../../../../../../../../Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/IP_REPO/pico_core_ip/project_2/project_2.srcs/sim_1/new/tb.v"/>
+        <Option Name="TopRTLFile" Val="$PPRDIR/../../../../../../VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/IP_REPO/pico_core_ip/project_2/project_2.srcs/sim_1/new/tb.v"/>
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SelectedSimModel" Val="rtl"/>
@@ -307,34 +337,6 @@
     <MsgAttr Name="Author" Val=""/>
     <MsgAttr Name="CreatedTimestamp" Val=""/>
     <MsgAttr Name="StringsToMatch" Val="WARNING: [IP_Flow 19-2187] The Product Guide file is missing."/>
-  </MsgRule>
-  <MsgRule>
-    <MsgAttr Name="RuleType" Val="0"/>
-    <MsgAttr Name="Limit" Val="-1"/>
-    <MsgAttr Name="NewSeverity" Val="ANY"/>
-    <MsgAttr Name="Id" Val="17-179"/>
-    <MsgAttr Name="Severity" Val="ANY"/>
-    <MsgAttr Name="ShowRule" Val="0"/>
-    <MsgAttr Name="RuleSource" Val="-1"/>
-    <MsgAttr Name="StringIsRegExp" Val="0"/>
-    <MsgAttr Name="RuleId" Val="2"/>
-    <MsgAttr Name="Note" Val=""/>
-    <MsgAttr Name="Author" Val=""/>
-    <MsgAttr Name="CreatedTimestamp" Val=""/>
-  </MsgRule>
-  <MsgRule>
-    <MsgAttr Name="RuleType" Val="0"/>
-    <MsgAttr Name="Limit" Val="-1"/>
-    <MsgAttr Name="NewSeverity" Val="ANY"/>
-    <MsgAttr Name="Id" Val="17-179"/>
-    <MsgAttr Name="Severity" Val="ANY"/>
-    <MsgAttr Name="ShowRule" Val="0"/>
-    <MsgAttr Name="RuleSource" Val="-1"/>
-    <MsgAttr Name="StringIsRegExp" Val="0"/>
-    <MsgAttr Name="RuleId" Val="3"/>
-    <MsgAttr Name="Note" Val=""/>
-    <MsgAttr Name="Author" Val=""/>
-    <MsgAttr Name="CreatedTimestamp" Val=""/>
   </MsgRule>
   <Board/>
   <DashboardSummary Version="1" Minor="0">

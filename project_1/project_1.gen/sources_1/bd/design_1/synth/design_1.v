@@ -2,8 +2,8 @@
 //Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-//Date        : Fri Jul 17 20:30:29 2026
-//Host        : VishalOmen running 64-bit major release  (build 9200)
+//Date        : Mon Aug 17 20:03:31 2026
+//Host        : Anagha running 64-bit major release  (build 9200)
 //Command     : generate_target design_1.bd
 //Design      : design_1
 //Purpose     : IP block netlist
@@ -163,10 +163,9 @@ module design_1
   wire [31:0]led_4bits_tri_i;
   wire [31:0]led_4bits_tri_o;
   wire [31:0]led_4bits_tri_t;
-  wire [31:0]picorv32_core_0_bram_portb_addr;
-  wire [31:0]picorv32_core_0_bram_portb_din;
-  wire picorv32_core_0_bram_portb_en;
-  wire [3:0]picorv32_core_0_bram_portb_we;
+  wire [31:0]picorv32_core_0_addrb;
+  wire [31:0]picorv32_core_0_dinb;
+  wire picorv32_core_0_enb;
   wire [31:0]picorv32_core_0_mem_axi_ARADDR;
   wire [2:0]picorv32_core_0_mem_axi_ARPROT;
   wire [0:0]picorv32_core_0_mem_axi_ARREADY;
@@ -184,6 +183,7 @@ module design_1
   wire [0:0]picorv32_core_0_mem_axi_WREADY;
   wire [3:0]picorv32_core_0_mem_axi_WSTRB;
   wire picorv32_core_0_mem_axi_WVALID;
+  wire [3:0]picorv32_core_0_web;
   wire [0:0]proc_sys_reset_0_peripheral_aresetn;
   wire qspi_flash_io0_i;
   wire qspi_flash_io0_o;
@@ -451,31 +451,30 @@ module design_1
         .tx(usb_uart_txd));
   design_1_blk_mem_gen_0_0 blk_mem_gen_0
        (.addra({1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,axi_bram_ctrl_0_BRAM_PORTA_ADDR}),
-        .addrb(picorv32_core_0_bram_portb_addr),
+        .addrb(picorv32_core_0_addrb),
         .clka(axi_bram_ctrl_0_BRAM_PORTA_CLK),
         .clkb(clk_wiz_0_clk_out1),
         .dina(axi_bram_ctrl_0_BRAM_PORTA_DIN),
-        .dinb(picorv32_core_0_bram_portb_din),
+        .dinb(picorv32_core_0_dinb),
         .douta(axi_bram_ctrl_0_BRAM_PORTA_DOUT),
         .doutb(blk_mem_gen_0_doutb),
         .ena(axi_bram_ctrl_0_BRAM_PORTA_EN),
-        .enb(picorv32_core_0_bram_portb_en),
+        .enb(picorv32_core_0_enb),
         .rsta(axi_bram_ctrl_0_BRAM_PORTA_RST),
         .rstb(1'b0),
         .wea(axi_bram_ctrl_0_BRAM_PORTA_WE),
-        .web(picorv32_core_0_bram_portb_we));
+        .web(picorv32_core_0_web));
   design_1_clk_wiz_0_0 clk_wiz_0
        (.clk_in1(clk_in1_0),
         .clk_out1(clk_wiz_0_clk_out1),
         .locked(clk_wiz_0_locked),
         .resetn(resetn_0));
   design_1_picorv32_core_0_0 picorv32_core_0
-       (.bram_portb_addr(picorv32_core_0_bram_portb_addr),
-        .bram_portb_din(picorv32_core_0_bram_portb_din),
-        .bram_portb_dout(blk_mem_gen_0_doutb),
-        .bram_portb_en(picorv32_core_0_bram_portb_en),
-        .bram_portb_we(picorv32_core_0_bram_portb_we),
+       (.addrb(picorv32_core_0_addrb),
         .clk(clk_wiz_0_clk_out1),
+        .dinb(picorv32_core_0_dinb),
+        .doutb(blk_mem_gen_0_doutb),
+        .enb(picorv32_core_0_enb),
         .irq({1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0}),
         .mem_axi_araddr(picorv32_core_0_mem_axi_ARADDR),
         .mem_axi_arprot(picorv32_core_0_mem_axi_ARPROT),
@@ -499,7 +498,8 @@ module design_1
         .pcpi_wait(1'b0),
         .pcpi_wr(1'b0),
         .resetn(proc_sys_reset_0_peripheral_aresetn),
-        .trap(trap_0));
+        .trap(trap_0),
+        .web(picorv32_core_0_web));
   design_1_proc_sys_reset_0_0 proc_sys_reset_0
        (.aux_reset_in(1'b1),
         .dcm_locked(clk_wiz_0_locked),

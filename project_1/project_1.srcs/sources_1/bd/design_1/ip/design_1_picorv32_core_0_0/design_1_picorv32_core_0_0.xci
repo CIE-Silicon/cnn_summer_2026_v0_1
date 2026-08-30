@@ -4,7 +4,7 @@
     "xci_name": "design_1_picorv32_core_0_0",
     "cell_name": "picorv32_core_0",
     "component_reference": "user.org:user:picorv32_core:1.0",
-    "ip_revision": "101",
+    "ip_revision": "110",
     "gen_directory": "../../../../../../project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0",
     "parameters": {
       "component_parameters": {
@@ -37,7 +37,13 @@
         "STACKADDR": [ { "value": "0xFFFFFFFF", "resolve_type": "user", "format": "bitString", "usage": "all" } ],
         "Component_Name": [ { "value": "design_1_picorv32_core_0_0", "resolve_type": "user", "usage": "all" } ],
         "FREQ_HZ": [ { "value": "", "resolve_type": "user", "usage": "all" } ],
-        "ENABLE_CNN": [ { "value": "1", "resolve_type": "user", "format": "long", "usage": "all" } ]
+        "ENABLE_CNN": [ { "value": "1", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "NUM_UNITS": [ { "value": "16", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "WT_REG_WIDTH": [ { "value": "64", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "ROW_DATA_WIDTH": [ { "value": "256", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "LINE_PAD_BITS": [ { "value": "8", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "LINE_WIDTH": [ { "value": "272", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "IMAGE_SIZE": [ { "value": "32", "resolve_type": "user", "format": "long", "usage": "all" } ]
       },
       "model_parameters": {
         "ENABLE_COUNTERS": [ { "value": "1", "resolve_type": "generated", "format": "long", "usage": "all" } ],
@@ -67,7 +73,13 @@
         "PROGADDR_RESET": [ { "value": "0x00000000", "resolve_type": "generated", "format": "bitString", "usage": "all" } ],
         "PROGADDR_IRQ": [ { "value": "0x00000010", "resolve_type": "generated", "format": "bitString", "usage": "all" } ],
         "STACKADDR": [ { "value": "0xFFFFFFFF", "resolve_type": "generated", "format": "bitString", "usage": "all" } ],
-        "ENABLE_CNN": [ { "value": "1", "resolve_type": "generated", "format": "long", "usage": "all" } ]
+        "ENABLE_CNN": [ { "value": "1", "resolve_type": "generated", "format": "long", "usage": "all" } ],
+        "NUM_UNITS": [ { "value": "16", "resolve_type": "generated", "format": "long", "usage": "all" } ],
+        "WT_REG_WIDTH": [ { "value": "64", "resolve_type": "dependent", "format": "long", "usage": "all" } ],
+        "ROW_DATA_WIDTH": [ { "value": "256", "resolve_type": "generated", "format": "long", "usage": "all" } ],
+        "LINE_PAD_BITS": [ { "value": "8", "resolve_type": "generated", "format": "long", "usage": "all" } ],
+        "LINE_WIDTH": [ { "value": "272", "resolve_type": "dependent", "format": "long", "usage": "all" } ],
+        "IMAGE_SIZE": [ { "value": "32", "resolve_type": "generated", "format": "long", "usage": "all" } ]
       },
       "project_parameters": {
         "ARCHITECTURE": [ { "value": "artix7", "resolve_type": "generated", "usage": "all" } ],
@@ -84,7 +96,7 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Integrator" } ],
-        "IPREVISION": [ { "value": "101" } ],
+        "IPREVISION": [ { "value": "110" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../../../project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
@@ -127,11 +139,11 @@
         "eoi": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
         "trace_valid": [ { "direction": "out" } ],
         "trace_data": [ { "direction": "out", "size_left": "35", "size_right": "0" } ],
-        "bram_portb_addr": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
-        "bram_portb_en": [ { "direction": "out" } ],
-        "bram_portb_we": [ { "direction": "out", "size_left": "3", "size_right": "0" } ],
-        "bram_portb_din": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
-        "bram_portb_dout": [ { "direction": "in", "size_left": "31", "size_right": "0" } ]
+        "addrb": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
+        "enb": [ { "direction": "out" } ],
+        "web": [ { "direction": "out", "size_left": "3", "size_right": "0" } ],
+        "dinb": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
+        "doutb": [ { "direction": "in", "size_left": "31", "size_right": "0" } ]
       },
       "interfaces": {
         "mem_axi": {
@@ -248,11 +260,11 @@
             "MEM_ADDRESS_MODE": [ { "value": "", "value_src": "weak", "resolve_type": "generated", "is_ips_inferred": true, "is_static_object": false } ]
           },
           "port_maps": {
-            "DIN": [ { "physical_name": "bram_portb_din" } ],
-            "EN": [ { "physical_name": "bram_portb_en" } ],
-            "DOUT": [ { "physical_name": "bram_portb_dout" } ],
-            "WE": [ { "physical_name": "bram_portb_we" } ],
-            "ADDR": [ { "physical_name": "bram_portb_addr" } ]
+            "DIN": [ { "physical_name": "dinb" } ],
+            "EN": [ { "physical_name": "enb" } ],
+            "DOUT": [ { "physical_name": "doutb" } ],
+            "WE": [ { "physical_name": "web" } ],
+            "ADDR": [ { "physical_name": "addrb" } ]
           }
         }
       },
@@ -265,5 +277,5 @@
       }
     }
   },
-  "checksum": "65f30995"
+  "checksum": "a4614274"
 }

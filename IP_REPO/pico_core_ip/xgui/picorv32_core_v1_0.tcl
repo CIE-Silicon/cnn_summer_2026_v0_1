@@ -207,6 +207,15 @@ proc validate_PARAM_VALUE.FREQ_HZ { PARAM_VALUE.FREQ_HZ } {
 	return true
 }
 
+proc update_PARAM_VALUE.IMAGE_SIZE { PARAM_VALUE.IMAGE_SIZE } {
+	# Procedure called to update IMAGE_SIZE when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.IMAGE_SIZE { PARAM_VALUE.IMAGE_SIZE } {
+	# Procedure called to validate IMAGE_SIZE
+	return true
+}
+
 proc update_PARAM_VALUE.LATCHED_IRQ { PARAM_VALUE.LATCHED_IRQ } {
 	# Procedure called to update LATCHED_IRQ when any of the dependent parameters in the arguments change
 }
@@ -225,12 +234,39 @@ proc validate_PARAM_VALUE.LATCHED_MEM_RDATA { PARAM_VALUE.LATCHED_MEM_RDATA } {
 	return true
 }
 
+proc update_PARAM_VALUE.LINE_PAD_BITS { PARAM_VALUE.LINE_PAD_BITS } {
+	# Procedure called to update LINE_PAD_BITS when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.LINE_PAD_BITS { PARAM_VALUE.LINE_PAD_BITS } {
+	# Procedure called to validate LINE_PAD_BITS
+	return true
+}
+
+proc update_PARAM_VALUE.LINE_WIDTH { PARAM_VALUE.LINE_WIDTH } {
+	# Procedure called to update LINE_WIDTH when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.LINE_WIDTH { PARAM_VALUE.LINE_WIDTH } {
+	# Procedure called to validate LINE_WIDTH
+	return true
+}
+
 proc update_PARAM_VALUE.MASKED_IRQ { PARAM_VALUE.MASKED_IRQ } {
 	# Procedure called to update MASKED_IRQ when any of the dependent parameters in the arguments change
 }
 
 proc validate_PARAM_VALUE.MASKED_IRQ { PARAM_VALUE.MASKED_IRQ } {
 	# Procedure called to validate MASKED_IRQ
+	return true
+}
+
+proc update_PARAM_VALUE.NUM_UNITS { PARAM_VALUE.NUM_UNITS } {
+	# Procedure called to update NUM_UNITS when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.NUM_UNITS { PARAM_VALUE.NUM_UNITS } {
+	# Procedure called to validate NUM_UNITS
 	return true
 }
 
@@ -258,6 +294,15 @@ proc update_PARAM_VALUE.REGS_INIT_ZERO { PARAM_VALUE.REGS_INIT_ZERO } {
 
 proc validate_PARAM_VALUE.REGS_INIT_ZERO { PARAM_VALUE.REGS_INIT_ZERO } {
 	# Procedure called to validate REGS_INIT_ZERO
+	return true
+}
+
+proc update_PARAM_VALUE.ROW_DATA_WIDTH { PARAM_VALUE.ROW_DATA_WIDTH } {
+	# Procedure called to update ROW_DATA_WIDTH when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.ROW_DATA_WIDTH { PARAM_VALUE.ROW_DATA_WIDTH } {
+	# Procedure called to validate ROW_DATA_WIDTH
 	return true
 }
 
@@ -294,6 +339,15 @@ proc update_PARAM_VALUE.TWO_STAGE_SHIFT { PARAM_VALUE.TWO_STAGE_SHIFT } {
 
 proc validate_PARAM_VALUE.TWO_STAGE_SHIFT { PARAM_VALUE.TWO_STAGE_SHIFT } {
 	# Procedure called to validate TWO_STAGE_SHIFT
+	return true
+}
+
+proc update_PARAM_VALUE.WT_REG_WIDTH { PARAM_VALUE.WT_REG_WIDTH } {
+	# Procedure called to update WT_REG_WIDTH when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.WT_REG_WIDTH { PARAM_VALUE.WT_REG_WIDTH } {
+	# Procedure called to validate WT_REG_WIDTH
 	return true
 }
 
@@ -436,5 +490,35 @@ proc update_MODELPARAM_VALUE.STACKADDR { MODELPARAM_VALUE.STACKADDR PARAM_VALUE.
 proc update_MODELPARAM_VALUE.ENABLE_CNN { MODELPARAM_VALUE.ENABLE_CNN PARAM_VALUE.ENABLE_CNN } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.ENABLE_CNN}] ${MODELPARAM_VALUE.ENABLE_CNN}
+}
+
+proc update_MODELPARAM_VALUE.NUM_UNITS { MODELPARAM_VALUE.NUM_UNITS PARAM_VALUE.NUM_UNITS } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.NUM_UNITS}] ${MODELPARAM_VALUE.NUM_UNITS}
+}
+
+proc update_MODELPARAM_VALUE.WT_REG_WIDTH { MODELPARAM_VALUE.WT_REG_WIDTH PARAM_VALUE.WT_REG_WIDTH } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.WT_REG_WIDTH}] ${MODELPARAM_VALUE.WT_REG_WIDTH}
+}
+
+proc update_MODELPARAM_VALUE.ROW_DATA_WIDTH { MODELPARAM_VALUE.ROW_DATA_WIDTH PARAM_VALUE.ROW_DATA_WIDTH } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.ROW_DATA_WIDTH}] ${MODELPARAM_VALUE.ROW_DATA_WIDTH}
+}
+
+proc update_MODELPARAM_VALUE.LINE_PAD_BITS { MODELPARAM_VALUE.LINE_PAD_BITS PARAM_VALUE.LINE_PAD_BITS } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.LINE_PAD_BITS}] ${MODELPARAM_VALUE.LINE_PAD_BITS}
+}
+
+proc update_MODELPARAM_VALUE.LINE_WIDTH { MODELPARAM_VALUE.LINE_WIDTH PARAM_VALUE.LINE_WIDTH } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.LINE_WIDTH}] ${MODELPARAM_VALUE.LINE_WIDTH}
+}
+
+proc update_MODELPARAM_VALUE.IMAGE_SIZE { MODELPARAM_VALUE.IMAGE_SIZE PARAM_VALUE.IMAGE_SIZE } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.IMAGE_SIZE}] ${MODELPARAM_VALUE.IMAGE_SIZE}
 }
 

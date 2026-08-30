@@ -1,48 +1,48 @@
 {
    "ActiveEmotionalView":"Default View",
-   "Default View_ScaleFactor":"0.39226",
-   "Default View_TopLeft":"288,-8",
+   "Default View_ScaleFactor":"0.717938",
+   "Default View_TopLeft":"607,517",
    "ExpandedHierarchyInLayout":"",
    "guistr":"# # String gsaved with Nlview 7.8.0 2024-04-26 e1825d835c VDI=44 GEI=38 GUI=JA:21.0 threadsafe
 #  -string -flagsOSRD
-preplace port qspi_flash -pg 1 -lvl 6 -x 1910 -y 80 -defaultsOSRD
-preplace port led_4bits -pg 1 -lvl 6 -x 1910 -y 380 -defaultsOSRD
-preplace port usb_uart -pg 1 -lvl 6 -x 1910 -y 510 -defaultsOSRD
+preplace port qspi_flash -pg 1 -lvl 6 -x 2000 -y 80 -defaultsOSRD
+preplace port led_4bits -pg 1 -lvl 6 -x 2000 -y 380 -defaultsOSRD
+preplace port usb_uart -pg 1 -lvl 6 -x 2000 -y 510 -defaultsOSRD
 preplace port port-id_clk_in1_0 -pg 1 -lvl 0 -x 0 -y 210 -defaultsOSRD
-preplace port port-id_trap_0 -pg 1 -lvl 6 -x 1910 -y 680 -defaultsOSRD
+preplace port port-id_trap_0 -pg 1 -lvl 6 -x 2000 -y 680 -defaultsOSRD
 preplace portBus resetn_0 -pg 1 -lvl 0 -x 0 -y 180 -defaultsOSRD
-preplace inst picorv32_core_0 -pg 1 -lvl 4 -x 1390 -y 930 -defaultsOSRD
-preplace inst axi_interconnect_0 -pg 1 -lvl 3 -x 780 -y 330 -defaultsOSRD
-preplace inst axi_uartlite_0 -pg 1 -lvl 4 -x 1390 -y 640 -defaultsOSRD
-preplace inst axi_quad_spi_0 -pg 1 -lvl 4 -x 1390 -y 90 -defaultsOSRD
-preplace inst axi_gpio_0 -pg 1 -lvl 4 -x 1390 -y 500 -defaultsOSRD
-preplace inst proc_sys_reset_0 -pg 1 -lvl 2 -x 450 -y 330 -defaultsOSRD
-preplace inst axi_bram_ctrl_0 -pg 1 -lvl 4 -x 1390 -y 360 -defaultsOSRD
-preplace inst blk_mem_gen_0 -pg 1 -lvl 5 -x 1770 -y 510 -defaultsOSRD
+preplace inst picorv32_core_0 -pg 1 -lvl 4 -x 1470 -y 980 -defaultsOSRD
+preplace inst axi_interconnect_0 -pg 1 -lvl 3 -x 860 -y 330 -defaultsOSRD
+preplace inst axi_uartlite_0 -pg 1 -lvl 4 -x 1470 -y 640 -defaultsOSRD
+preplace inst axi_quad_spi_0 -pg 1 -lvl 4 -x 1470 -y 90 -defaultsOSRD
+preplace inst axi_gpio_0 -pg 1 -lvl 4 -x 1470 -y 500 -defaultsOSRD
+preplace inst proc_sys_reset_0 -pg 1 -lvl 2 -x 460 -y 330 -defaultsOSRD
+preplace inst axi_bram_ctrl_0 -pg 1 -lvl 4 -x 1470 -y 360 -defaultsOSRD
+preplace inst blk_mem_gen_0 -pg 1 -lvl 5 -x 1850 -y 510 -defaultsOSRD
 preplace inst clk_wiz_0 -pg 1 -lvl 1 -x 170 -y 200 -defaultsOSRD
-preplace netloc Op1_0_1 1 0 2 80 310 N
-preplace netloc blk_mem_gen_0_doutb 1 4 1 1620 540n
+preplace netloc Op1_0_1 1 0 2 80 130 270
 preplace netloc clk_in1_0_1 1 0 1 NJ 210
-preplace netloc clk_wiz_0_clk_out1 1 1 4 280 190 630 150 1210 720 1580
+preplace netloc clk_wiz_0_clk_out1 1 1 4 290 190 700 150 1310 270 1650
 preplace netloc clk_wiz_0_locked 1 1 1 260 210n
-preplace netloc picorv32_core_0_bram_portb_addr 1 4 1 1610 480n
-preplace netloc picorv32_core_0_bram_portb_din 1 4 1 1600 520n
-preplace netloc picorv32_core_0_bram_portb_en 1 4 1 1630 560n
-preplace netloc picorv32_core_0_bram_portb_we 1 4 1 1640 580n
-preplace netloc picorv32_core_0_trap 1 4 2 1650J 680 NJ
-preplace netloc proc_sys_reset_0_peripheral_aresetn 1 2 2 620 140 1220
-preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 4 1 1570J 360n
-preplace netloc axi_gpio_0_GPIO 1 4 2 1560J 380 NJ
-preplace netloc axi_interconnect_0_M00_AXI 1 3 1 1230 300n
-preplace netloc axi_interconnect_0_M01_AXI 1 3 1 930 60n
-preplace netloc axi_interconnect_0_M02_AXI 1 3 1 930 340n
-preplace netloc axi_interconnect_0_M03_AXI 1 3 1 920 360n
+preplace netloc picorv32_core_0_trap 1 4 2 1700J 680 NJ
+preplace netloc proc_sys_reset_0_peripheral_aresetn 1 2 2 710 520 1320
+preplace netloc picorv32_core_0_addrb 1 4 1 1660 470n
+preplace netloc blk_mem_gen_0_doutb 1 4 1 1670 530n
+preplace netloc picorv32_core_0_dinb 1 4 1 1650 510n
+preplace netloc picorv32_core_0_enb 1 4 1 1680 550n
+preplace netloc picorv32_core_0_web 1 4 1 1690 590n
+preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 4 1 1610J 360n
+preplace netloc axi_gpio_0_GPIO 1 4 2 1620J 360 1980J
+preplace netloc axi_interconnect_0_M00_AXI 1 3 1 1340 300n
+preplace netloc axi_interconnect_0_M01_AXI 1 3 1 1010 60n
+preplace netloc axi_interconnect_0_M02_AXI 1 3 1 1010 340n
+preplace netloc axi_interconnect_0_M03_AXI 1 3 1 1000 360n
 preplace netloc axi_quad_spi_0_SPI_0 1 4 2 NJ 80 NJ
-preplace netloc axi_uartlite_0_UART 1 4 2 1590J 640 1890J
-preplace netloc picorv32_core_0_BRAM_PORTB 1 4 1 1570 460n
-preplace netloc picorv32_core_0_mem_axi 1 2 3 640 0 NJ 0 1550
-levelinfo -pg 1 0 170 450 780 1390 1770 1910
-pagesize -pg 1 -db -bbox -sgen -150 -150 2890 1130
+preplace netloc axi_uartlite_0_UART 1 4 2 1630J 370 1970J
+preplace netloc picorv32_core_0_BRAM_PORTB 1 4 1 1640 450n
+preplace netloc picorv32_core_0_mem_axi 1 2 3 720 510 1330J 280 1600
+levelinfo -pg 1 0 170 460 860 1470 1850 2000
+pagesize -pg 1 -db -bbox -sgen -150 -150 3120 1420
 "
 }
 {

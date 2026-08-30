@@ -212,7 +212,7 @@
     "components": {
       "picorv32_core_0": {
         "vlnv": "user.org:user:picorv32_core:1.0",
-        "ip_revision": "101",
+        "ip_revision": "110",
         "xci_name": "design_1_picorv32_core_0_0",
         "xci_path": "ip\\design_1_picorv32_core_0_0\\design_1_picorv32_core_0_0.xci",
         "inst_hier_path": "picorv32_core_0",
@@ -1161,8 +1161,8 @@
       },
       "picorv32_core_0_BRAM_PORTB": {
         "interface_ports": [
-          "picorv32_core_0/BRAM_PORTB",
-          "blk_mem_gen_0/BRAM_PORTB"
+          "blk_mem_gen_0/BRAM_PORTB",
+          "picorv32_core_0/BRAM_PORTB"
         ]
       },
       "picorv32_core_0_mem_axi": {
@@ -1183,7 +1183,7 @@
       "blk_mem_gen_0_doutb": {
         "ports": [
           "blk_mem_gen_0/doutb",
-          "picorv32_core_0/bram_portb_dout"
+          "picorv32_core_0/doutb"
         ]
       },
       "clk_in1_0_1": {
@@ -1207,8 +1207,8 @@
           "axi_gpio_0/s_axi_aclk",
           "axi_quad_spi_0/ext_spi_clk",
           "axi_quad_spi_0/s_axi4_aclk",
-          "blk_mem_gen_0/clkb",
-          "picorv32_core_0/clk"
+          "picorv32_core_0/clk",
+          "blk_mem_gen_0/clkb"
         ]
       },
       "clk_wiz_0_locked": {
@@ -1217,34 +1217,34 @@
           "proc_sys_reset_0/dcm_locked"
         ]
       },
-      "picorv32_core_0_bram_portb_addr": {
+      "picorv32_core_0_addrb": {
         "ports": [
-          "picorv32_core_0/bram_portb_addr",
+          "picorv32_core_0/addrb",
           "blk_mem_gen_0/addrb"
         ]
       },
-      "picorv32_core_0_bram_portb_din": {
+      "picorv32_core_0_dinb": {
         "ports": [
-          "picorv32_core_0/bram_portb_din",
+          "picorv32_core_0/dinb",
           "blk_mem_gen_0/dinb"
         ]
       },
-      "picorv32_core_0_bram_portb_en": {
+      "picorv32_core_0_enb": {
         "ports": [
-          "picorv32_core_0/bram_portb_en",
+          "picorv32_core_0/enb",
           "blk_mem_gen_0/enb"
-        ]
-      },
-      "picorv32_core_0_bram_portb_we": {
-        "ports": [
-          "picorv32_core_0/bram_portb_we",
-          "blk_mem_gen_0/web"
         ]
       },
       "picorv32_core_0_trap": {
         "ports": [
           "picorv32_core_0/trap",
           "trap_0"
+        ]
+      },
+      "picorv32_core_0_web": {
+        "ports": [
+          "picorv32_core_0/web",
+          "blk_mem_gen_0/web"
         ]
       },
       "proc_sys_reset_0_peripheral_aresetn": {

@@ -486,4 +486,3 @@ xdfe_ofdm_v2_2_2=$RDI_DATADIR/xsim/ip/xdfe_ofdm_v2_2_2
 xp5io_wizard_phy_v1_0_0=$RDI_DATADIR/xsim/ip/xp5io_wizard_phy_v1_0_0
 xsdbs_v1_0_5=$RDI_DATADIR/xsim/ip/xsdbs_v1_0_5
 zynq_ultra_ps_e_vip_v1_0_22=$RDI_DATADIR/xsim/ip/zynq_ultra_ps_e_vip_v1_0_22
-xil_defaultlib=xsim.dir/xil_defaultlib

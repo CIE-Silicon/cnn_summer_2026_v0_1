@@ -2,10 +2,10 @@
 -- Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
--- Date        : Fri Jul 17 20:31:37 2026
--- Host        : VishalOmen running 64-bit major release  (build 9200)
+-- Date        : Mon Aug 17 20:02:50 2026
+-- Host        : Anagha running 64-bit major release  (build 9200)
 -- Command     : write_vhdl -force -mode synth_stub
---               c:/Users/visha/Desktop/CIEsummer/myrtldesigns/frontend_repo_v_0_1/project_1/project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0/design_1_picorv32_core_0_0_stub.vhdl
+--               c:/VivadoProjects/frontend_repo_v_0_1latest/frontend_repo_v_0_1/project_1/project_1.gen/sources_1/bd/design_1/ip/design_1_picorv32_core_0_0/design_1_picorv32_core_0_0_stub.vhdl
 -- Design      : design_1_picorv32_core_0_0
 -- Purpose     : Stub declaration of top-level module interface
 -- Device      : xc7a35tcsg324-1
@@ -47,11 +47,11 @@ entity design_1_picorv32_core_0_0 is
     eoi : out STD_LOGIC_VECTOR ( 31 downto 0 );
     trace_valid : out STD_LOGIC;
     trace_data : out STD_LOGIC_VECTOR ( 35 downto 0 );
-    bram_portb_addr : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    bram_portb_en : out STD_LOGIC;
-    bram_portb_we : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    bram_portb_din : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    bram_portb_dout : in STD_LOGIC_VECTOR ( 31 downto 0 )
+    addrb : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    enb : out STD_LOGIC;
+    web : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    dinb : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    doutb : in STD_LOGIC_VECTOR ( 31 downto 0 )
   );
 
   attribute CHECK_LICENSE_TYPE : string;
@@ -66,7 +66,7 @@ architecture stub of design_1_picorv32_core_0_0 is
   attribute syn_black_box : boolean;
   attribute black_box_pad_pin : string;
   attribute syn_black_box of stub : architecture is true;
-  attribute black_box_pad_pin of stub : architecture is "clk,resetn,trap,mem_axi_awvalid,mem_axi_awready,mem_axi_awaddr[31:0],mem_axi_awprot[2:0],mem_axi_wvalid,mem_axi_wready,mem_axi_wdata[31:0],mem_axi_wstrb[3:0],mem_axi_bvalid,mem_axi_bready,mem_axi_arvalid,mem_axi_arready,mem_axi_araddr[31:0],mem_axi_arprot[2:0],mem_axi_rvalid,mem_axi_rready,mem_axi_rdata[31:0],pcpi_valid,pcpi_insn[31:0],pcpi_rs1[31:0],pcpi_rs2[31:0],pcpi_wr,pcpi_rd[31:0],pcpi_wait,pcpi_ready,irq[31:0],eoi[31:0],trace_valid,trace_data[35:0],bram_portb_addr[31:0],bram_portb_en,bram_portb_we[3:0],bram_portb_din[31:0],bram_portb_dout[31:0]";
+  attribute black_box_pad_pin of stub : architecture is "clk,resetn,trap,mem_axi_awvalid,mem_axi_awready,mem_axi_awaddr[31:0],mem_axi_awprot[2:0],mem_axi_wvalid,mem_axi_wready,mem_axi_wdata[31:0],mem_axi_wstrb[3:0],mem_axi_bvalid,mem_axi_bready,mem_axi_arvalid,mem_axi_arready,mem_axi_araddr[31:0],mem_axi_arprot[2:0],mem_axi_rvalid,mem_axi_rready,mem_axi_rdata[31:0],pcpi_valid,pcpi_insn[31:0],pcpi_rs1[31:0],pcpi_rs2[31:0],pcpi_wr,pcpi_rd[31:0],pcpi_wait,pcpi_ready,irq[31:0],eoi[31:0],trace_valid,trace_data[35:0],addrb[31:0],enb,web[3:0],dinb[31:0],doutb[31:0]";
   attribute X_INTERFACE_INFO : string;
   attribute X_INTERFACE_INFO of clk : signal is "xilinx.com:signal:clock:1.0 clk CLK";
   attribute X_INTERFACE_MODE : string;
@@ -98,13 +98,13 @@ architecture stub of design_1_picorv32_core_0_0 is
   attribute X_INTERFACE_INFO of irq : signal is "xilinx.com:signal:interrupt:1.0 irq INTERRUPT";
   attribute X_INTERFACE_MODE of irq : signal is "slave";
   attribute X_INTERFACE_PARAMETER of irq : signal is "XIL_INTERFACENAME irq, SENSITIVITY LEVEL_HIGH, PortWidth 1";
-  attribute X_INTERFACE_INFO of bram_portb_addr : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB ADDR";
-  attribute X_INTERFACE_MODE of bram_portb_addr : signal is "master";
-  attribute X_INTERFACE_PARAMETER of bram_portb_addr : signal is "XIL_INTERFACENAME BRAM_PORTB, MEM_SIZE 8192, MEM_WIDTH 32, MEM_ECC NONE, MASTER_TYPE OTHER, READ_LATENCY 1";
-  attribute X_INTERFACE_INFO of bram_portb_en : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB EN";
-  attribute X_INTERFACE_INFO of bram_portb_we : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB WE";
-  attribute X_INTERFACE_INFO of bram_portb_din : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB DIN";
-  attribute X_INTERFACE_INFO of bram_portb_dout : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB DOUT";
+  attribute X_INTERFACE_INFO of addrb : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB ADDR";
+  attribute X_INTERFACE_MODE of addrb : signal is "master";
+  attribute X_INTERFACE_PARAMETER of addrb : signal is "XIL_INTERFACENAME BRAM_PORTB, MEM_SIZE 8192, MEM_WIDTH 32, MEM_ECC NONE, MASTER_TYPE OTHER, READ_LATENCY 1";
+  attribute X_INTERFACE_INFO of enb : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB EN";
+  attribute X_INTERFACE_INFO of web : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB WE";
+  attribute X_INTERFACE_INFO of dinb : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB DIN";
+  attribute X_INTERFACE_INFO of doutb : signal is "xilinx.com:interface:bram:1.0 BRAM_PORTB DOUT";
   attribute X_CORE_INFO : string;
   attribute X_CORE_INFO of stub : architecture is "picorv32_core,Vivado 2025.2";
 begin

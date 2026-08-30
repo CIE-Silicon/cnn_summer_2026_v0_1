@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Fri Jul 17 20:30:30 2026" VIVADOVERSION="2025.2">
+<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Mon Aug 17 20:03:32 2026" VIVADOVERSION="2025.2">
 
   <SYSTEMINFO ARCH="artix7" DEVICE="7a35t" NAME="design_1" PACKAGE="csg324" SPEEDGRADE="-1"/>
 
@@ -3725,10 +3725,10 @@
             <CONNECTION INSTANCE="axi_bram_ctrl_0" PORT="bram_addr_a"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="31" NAME="addrb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_addr">
+        <PORT DIR="I" LEFT="31" NAME="addrb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_addrb">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_addr"/>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_addr"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="addrb"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="addrb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="I" NAME="clka" SIGIS="clk" SIGNAME="axi_bram_ctrl_0_bram_clk_a">
@@ -3741,10 +3741,10 @@
             <CONNECTION INSTANCE="axi_bram_ctrl_0" PORT="bram_wrdata_a"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="31" NAME="dinb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_din">
+        <PORT DIR="I" LEFT="31" NAME="dinb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_dinb">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_din"/>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_din"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="dinb"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="dinb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" LEFT="31" NAME="douta" RIGHT="0" SIGIS="undef" SIGNAME="axi_bram_ctrl_0_bram_rddata_a">
@@ -3754,10 +3754,10 @@
         </PORT>
         <PORT DIR="O" LEFT="31" NAME="doutb" RIGHT="0" SIGIS="undef" SIGNAME="blk_mem_gen_0_doutb">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_dout"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="doutb"/>
           </CONNECTIONS>
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_dout"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="doutb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="I" NAME="ena" SIGIS="undef" SIGNAME="axi_bram_ctrl_0_bram_en_a">
@@ -3765,10 +3765,10 @@
             <CONNECTION INSTANCE="axi_bram_ctrl_0" PORT="bram_en_a"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" NAME="enb" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_en">
+        <PORT DIR="I" NAME="enb" SIGIS="undef" SIGNAME="picorv32_core_0_enb">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_en"/>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_en"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="enb"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="enb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="I" NAME="rsta" SIGIS="rst" SIGNAME="axi_bram_ctrl_0_bram_rst_a">
@@ -3783,10 +3783,10 @@
             <CONNECTION INSTANCE="axi_bram_ctrl_0" PORT="bram_we_a"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="3" NAME="web" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_we">
+        <PORT DIR="I" LEFT="3" NAME="web" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_web">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_we"/>
-            <CONNECTION INSTANCE="picorv32_core_0" PORT="bram_portb_we"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="web"/>
+            <CONNECTION INSTANCE="picorv32_core_0" PORT="web"/>
           </CONNECTIONS>
         </PORT>
       </PORTS>
@@ -4426,8 +4426,8 @@
             <CONNECTION INSTANCE="axi_gpio_0" PORT="s_axi_aclk"/>
             <CONNECTION INSTANCE="axi_quad_spi_0" PORT="ext_spi_clk"/>
             <CONNECTION INSTANCE="axi_quad_spi_0" PORT="s_axi4_aclk"/>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="clkb"/>
             <CONNECTION INSTANCE="picorv32_core_0" PORT="clk"/>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="clkb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" NAME="locked" SIGIS="undef" SIGNAME="clk_wiz_0_locked">
@@ -4443,7 +4443,7 @@
       </PORTS>
       <BUSINTERFACES/>
     </MODULE>
-    <MODULE COREREVISION="101" FULLNAME="/picorv32_core_0" HWVERSION="1.0" INSTANCE="picorv32_core_0" IPTYPE="PERIPHERAL" IS_ENABLE="1" MODCLASS="PERIPHERAL" MODTYPE="picorv32_core" VLNV="user.org:user:picorv32_core:1.0">
+    <MODULE COREREVISION="110" FULLNAME="/picorv32_core_0" HWVERSION="1.0" INSTANCE="picorv32_core_0" IPTYPE="PERIPHERAL" IS_ENABLE="1" MODCLASS="PERIPHERAL" MODTYPE="picorv32_core" VLNV="user.org:user:picorv32_core:1.0">
       <DOCUMENTS/>
       <PARAMETERS>
         <PARAMETER NAME="BARREL_SHIFTER" VALUE="0"/>
@@ -4464,56 +4464,56 @@
         <PARAMETER NAME="ENABLE_REGS_16_31" VALUE="1"/>
         <PARAMETER NAME="ENABLE_REGS_DUALPORT" VALUE="1"/>
         <PARAMETER NAME="ENABLE_TRACE" VALUE="0"/>
+        <PARAMETER NAME="IMAGE_SIZE" VALUE="32"/>
         <PARAMETER NAME="LATCHED_IRQ" VALUE="0xFFFFFFFE"/>
         <PARAMETER NAME="LATCHED_MEM_RDATA" VALUE="0"/>
+        <PARAMETER NAME="LINE_PAD_BITS" VALUE="8"/>
+        <PARAMETER NAME="LINE_WIDTH" VALUE="272"/>
         <PARAMETER NAME="MASKED_IRQ" VALUE="0x00000000"/>
+        <PARAMETER NAME="NUM_UNITS" VALUE="16"/>
         <PARAMETER NAME="PROGADDR_IRQ" VALUE="0x00000010"/>
         <PARAMETER NAME="PROGADDR_RESET" VALUE="0x00000000"/>
         <PARAMETER NAME="REGS_INIT_ZERO" VALUE="0"/>
+        <PARAMETER NAME="ROW_DATA_WIDTH" VALUE="256"/>
         <PARAMETER NAME="STACKADDR" VALUE="0xFFFFFFFF"/>
         <PARAMETER NAME="TWO_CYCLE_ALU" VALUE="0"/>
         <PARAMETER NAME="TWO_CYCLE_COMPARE" VALUE="0"/>
         <PARAMETER NAME="TWO_STAGE_SHIFT" VALUE="1"/>
+        <PARAMETER NAME="WT_REG_WIDTH" VALUE="64"/>
         <PARAMETER NAME="Component_Name" VALUE="design_1_picorv32_core_0_0"/>
         <PARAMETER NAME="FREQ_HZ"/>
         <PARAMETER NAME="EDK_IPTYPE" VALUE="PERIPHERAL"/>
       </PARAMETERS>
       <PORTS>
-        <PORT DIR="O" LEFT="31" NAME="bram_portb_addr" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_addr">
+        <PORT DIR="O" LEFT="31" NAME="addrb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_addrb">
           <CONNECTIONS>
             <CONNECTION INSTANCE="blk_mem_gen_0" PORT="addrb"/>
             <CONNECTION INSTANCE="blk_mem_gen_0" PORT="addrb"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="O" LEFT="31" NAME="bram_portb_din" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_din">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="dinb"/>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="dinb"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="I" LEFT="31" NAME="bram_portb_dout" RIGHT="0" SIGIS="undef" SIGNAME="blk_mem_gen_0_doutb">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="doutb"/>
-          </CONNECTIONS>
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="doutb"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="O" NAME="bram_portb_en" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_en">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="enb"/>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="enb"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="O" LEFT="3" NAME="bram_portb_we" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_bram_portb_we">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="web"/>
-            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="web"/>
           </CONNECTIONS>
         </PORT>
         <PORT CLKFREQUENCY="100000000" DIR="I" NAME="clk" SIGIS="clk" SIGNAME="clk_wiz_0_clk_out1">
           <CONNECTIONS>
             <CONNECTION INSTANCE="clk_wiz_0" PORT="clk_out1"/>
+          </CONNECTIONS>
+        </PORT>
+        <PORT DIR="O" LEFT="31" NAME="dinb" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_dinb">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="dinb"/>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="dinb"/>
+          </CONNECTIONS>
+        </PORT>
+        <PORT DIR="I" LEFT="31" NAME="doutb" RIGHT="0" SIGIS="undef" SIGNAME="blk_mem_gen_0_doutb">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="doutb"/>
+          </CONNECTIONS>
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="doutb"/>
+          </CONNECTIONS>
+        </PORT>
+        <PORT DIR="O" NAME="enb" SIGIS="undef" SIGNAME="picorv32_core_0_enb">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="enb"/>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="enb"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" LEFT="31" NAME="eoi" RIGHT="0" SIGIS="undef"/>
@@ -4623,6 +4623,12 @@
             <CONNECTION INSTANCE="External_Ports" PORT="trap_0"/>
           </CONNECTIONS>
         </PORT>
+        <PORT DIR="O" LEFT="3" NAME="web" RIGHT="0" SIGIS="undef" SIGNAME="picorv32_core_0_web">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="web"/>
+            <CONNECTION INSTANCE="blk_mem_gen_0" PORT="web"/>
+          </CONNECTIONS>
+        </PORT>
       </PORTS>
       <BUSINTERFACES>
         <BUSINTERFACE BUSNAME="picorv32_core_0_mem_axi" DATAWIDTH="32" NAME="mem_axi" TYPE="MASTER" VLNV="xilinx.com:interface:aximm:1.0">
@@ -4686,11 +4692,11 @@
           <PARAMETER NAME="READ_LATENCY" VALUE="1"/>
           <PARAMETER NAME="READ_WRITE_MODE"/>
           <PORTMAPS>
-            <PORTMAP LOGICAL="ADDR" PHYSICAL="bram_portb_addr"/>
-            <PORTMAP LOGICAL="DIN" PHYSICAL="bram_portb_din"/>
-            <PORTMAP LOGICAL="DOUT" PHYSICAL="bram_portb_dout"/>
-            <PORTMAP LOGICAL="EN" PHYSICAL="bram_portb_en"/>
-            <PORTMAP LOGICAL="WE" PHYSICAL="bram_portb_we"/>
+            <PORTMAP LOGICAL="ADDR" PHYSICAL="addrb"/>
+            <PORTMAP LOGICAL="DIN" PHYSICAL="dinb"/>
+            <PORTMAP LOGICAL="DOUT" PHYSICAL="doutb"/>
+            <PORTMAP LOGICAL="EN" PHYSICAL="enb"/>
+            <PORTMAP LOGICAL="WE" PHYSICAL="web"/>
           </PORTMAPS>
         </BUSINTERFACE>
       </BUSINTERFACES>

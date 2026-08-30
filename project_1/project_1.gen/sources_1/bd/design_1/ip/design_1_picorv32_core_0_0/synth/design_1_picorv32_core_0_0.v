@@ -48,7 +48,7 @@
 
 
 // IP VLNV: user.org:user:picorv32_core:1.0
-// IP Revision: 101
+// IP Revision: 110
 
 (* X_CORE_INFO = "picorv32_core,Vivado 2025.2" *)
 (* CHECK_LICENSE_TYPE = "design_1_picorv32_core_0_0,picorv32_core,{}" *)
@@ -87,11 +87,11 @@ module design_1_picorv32_core_0_0 (
   eoi,
   trace_valid,
   trace_data,
-  bram_portb_addr,
-  bram_portb_en,
-  bram_portb_we,
-  bram_portb_din,
-  bram_portb_dout
+  addrb,
+  enb,
+  web,
+  dinb,
+  doutb
 );
 
 (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk CLK" *)
@@ -158,15 +158,15 @@ output wire [35 : 0] trace_data;
 (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB ADDR" *)
 (* X_INTERFACE_MODE = "master" *)
 (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTB, MEM_SIZE 8192, MEM_WIDTH 32, MEM_ECC NONE, MASTER_TYPE OTHER, READ_LATENCY 1" *)
-output wire [31 : 0] bram_portb_addr;
+output wire [31 : 0] addrb;
 (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB EN" *)
-output wire bram_portb_en;
+output wire enb;
 (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB WE" *)
-output wire [3 : 0] bram_portb_we;
+output wire [3 : 0] web;
 (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB DIN" *)
-output wire [31 : 0] bram_portb_din;
+output wire [31 : 0] dinb;
 (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB DOUT" *)
-input wire [31 : 0] bram_portb_dout;
+input wire [31 : 0] doutb;
 
   picorv32_core #(
     .ENABLE_COUNTERS(1),
@@ -196,7 +196,13 @@ input wire [31 : 0] bram_portb_dout;
     .PROGADDR_RESET(32'H00000000),
     .PROGADDR_IRQ(32'H00000010),
     .STACKADDR(32'HFFFFFFFF),
-    .ENABLE_CNN(1)
+    .ENABLE_CNN(1),
+    .NUM_UNITS(16),
+    .WT_REG_WIDTH(64),
+    .ROW_DATA_WIDTH(256),
+    .LINE_PAD_BITS(8),
+    .LINE_WIDTH(272),
+    .IMAGE_SIZE(32)
   ) inst (
     .clk(clk),
     .resetn(resetn),
@@ -230,10 +236,10 @@ input wire [31 : 0] bram_portb_dout;
     .eoi(eoi),
     .trace_valid(trace_valid),
     .trace_data(trace_data),
-    .bram_portb_addr(bram_portb_addr),
-    .bram_portb_en(bram_portb_en),
-    .bram_portb_we(bram_portb_we),
-    .bram_portb_din(bram_portb_din),
-    .bram_portb_dout(bram_portb_dout)
+    .addrb(addrb),
+    .enb(enb),
+    .web(web),
+    .dinb(dinb),
+    .doutb(doutb)
   );
 endmodule

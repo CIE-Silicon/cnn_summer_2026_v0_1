@@ -1,16 +1,20 @@
 # compile verilog/system verilog design source files
-verilog xil_defaultlib  --include "../../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../project_1.gen/sources_1/bd/design_1/ipshared/ec67/hdl" --include "../../../../project_1.gen/sources_1/bd/design_1/ipshared/a415" \
+verilog xil_defaultlib  --include "../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../project_1.gen/sources_1/bd/design_1/ipshared/ec67/hdl" --include "../../../../project_1.gen/sources_1/bd/design_1/ipshared/a415" \
 "../../../../project_1.ip_user_files/bd/design_1/ip/design_1_picorv32_core_0_0/src/sim/blk_mem_gen_0.v" \
-"../../../../project_1.gen/sources_1/bd/design_1/ipshared/d7f0/src/picorv32.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/cnn_coprocessor_wrapper.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/mac_parallel.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/mac_unit.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/store_fsm.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/weight_loader_fsm.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/window_generator.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/bram_arbiter.v" \
-"../../../../project_1.ip_user_files/bd/design_1/ipshared/d7f0/src/image_loader_fsm.v" \
-"../../../../project_1.gen/sources_1/bd/design_1/ipshared/d7f0/src/picorv32_core.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/picorv32.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/mac_parallel.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/mac_unit.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/store_fsm.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/weight_loader_fsm.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/window_generator.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/bram_arbiter.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/channel_addr_fsm.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/cnn_coprocessor_subsystem.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/image_loader_wrapper.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/mac_valid_driver.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/row_ctrl_fsm.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/row_loader_fsm.v" \
+"../../../../project_1.ip_user_files/bd/design_1/ipshared/571e/src/picorv32_core.v" \
 "../../../../project_1.ip_user_files/bd/design_1/ip/design_1_picorv32_core_0_0/sim/design_1_picorv32_core_0_0.v" \
 "../../../../project_1.ip_user_files/bd/design_1/ip/design_1_axi_interconnect_0_imp_xbar_0/sim/design_1_axi_interconnect_0_imp_xbar_0.v" \
 "../../../../project_1.ip_user_files/bd/design_1/ip/design_1_axi_interconnect_0_imp_auto_pc_0/sim/design_1_axi_interconnect_0_imp_auto_pc_0.v" \
